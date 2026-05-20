@@ -6,15 +6,21 @@
     <title>STF SOG14 OSINT</title>
     <style>
         :root {
-            --bg-color: #0a0f1d;
-            --panel-bg: #111827;
-            --accent-blue: #38bdf8;
-            --accent-glow: rgba(56, 189, 248, 0.2);
-            --text-main: #f3f4f6;
-            --text-muted: #9ca3af;
-            --border-color: #1f2937;
-            --error-red: #ef4444;
+            --bg-color: #060a13;
+            --panel-bg: #0f172a;
+            --border-color: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --error-red: #f43f5e;
             --success-green: #10b981;
+            
+            /* DB-1 Specific Color Spaces */
+            --db1-blue: #38bdf8;
+            --db1-glow: rgba(56, 189, 248, 0.15);
+            
+            /* DB-2 Specific Color Spaces */
+            --db2-green: #10b981;
+            --db2-glow: rgba(16, 185, 129, 0.15);
         }
 
         body {
@@ -34,42 +40,43 @@
             background: var(--panel-bg);
             padding: 30px;
             border-radius: 16px;
-            border: 1px solid #1e293b;
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5), 0 0 20px var(--accent-glow);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
             width: 100%;
-            max-width: 500px;
+            max-width: 600px;
             position: relative;
             overflow: hidden;
         }
 
+        /* Top decorative scanner lines */
         .container::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
-            height: 4px;
-            background: linear-gradient(90deg, transparent, var(--accent-blue), transparent);
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--db1-blue), var(--db2-green), transparent);
         }
 
         h1 {
             margin-top: 0;
             font-size: 26px;
             text-align: center;
-            color: var(--accent-blue);
-            letter-spacing: 2px;
+            color: #ffffff;
+            letter-spacing: 3px;
             text-transform: uppercase;
-            text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+            text-shadow: 0 0 8px rgba(255,255,255,0.2);
             margin-bottom: 5px;
         }
 
         p.subtitle {
             text-align: center;
             color: var(--text-muted);
-            font-size: 12px;
+            font-size: 11px;
             margin-bottom: 30px;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
         }
 
         .input-group {
@@ -80,7 +87,7 @@
         input[type="text"] {
             width: 100%;
             padding: 14px 16px;
-            background-color: #030712;
+            background-color: #020617;
             border: 1px solid var(--border-color);
             border-radius: 8px;
             box-sizing: border-box;
@@ -92,8 +99,8 @@
         }
 
         input[type="text"]:focus {
-            border-color: var(--accent-blue);
-            box-shadow: 0 0 10px var(--accent-glow);
+            border-color: var(--db1-blue);
+            box-shadow: 0 0 12px var(--db1-glow);
         }
 
         button {
@@ -108,60 +115,108 @@
             cursor: pointer;
             transition: all 0.2s ease;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
             font-family: inherit;
             box-shadow: 0 4px 12px rgba(3, 105, 161, 0.3);
         }
 
         button:hover {
             background: linear-gradient(135deg, #0369a1, #075985);
-            box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
         }
 
         .loading {
             text-align: center;
             display: none;
-            color: var(--accent-blue);
+            color: var(--db1-blue);
             margin-top: 20px;
-            font-size: 14px;
+            font-size: 13px;
+            letter-spacing: 1px;
             animation: pulse 1.5s infinite;
         }
 
         @keyframes pulse {
-            0% { opacity: 0.6; }
+            0%, 100% { opacity: 0.6; }
             50% { opacity: 1; }
-            100% { opacity: 0.6; }
         }
 
         .result-box {
             margin-top: 30px;
-            padding: 20px;
-            border-radius: 8px;
-            background: #070a13;
-            border: 1px solid rgba(56, 189, 248, 0.3);
             display: none;
         }
 
-        .result-header {
+        /* Server Core Blocks styling separation rules */
+        .server-section {
+            margin-bottom: 25px;
+            padding: 20px;
+            border-radius: 12px;
+            background: #090f1c;
+        }
+
+        .server-section.db1-theme {
+            border: 1px solid rgba(56, 189, 248, 0.15);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2), inset 0 0 15px var(--db1-glow);
+        }
+
+        .server-section.db2-theme {
+            border: 1px solid rgba(16, 185, 129, 0.15);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2), inset 0 0 15px var(--db2-glow);
+        }
+
+        .server-header {
             display: flex;
             justify-content: space-between;
             font-size: 11px;
-            color: var(--accent-blue);
             text-transform: uppercase;
             letter-spacing: 1px;
             margin-bottom: 15px;
             padding-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .db1-theme .server-header {
+            color: var(--db1-blue);
             border-bottom: 1px dashed rgba(56, 189, 248, 0.2);
         }
+
+        .db2-theme .server-header {
+            color: var(--db2-green);
+            border-bottom: 1px dashed rgba(16, 185, 129, 0.2);
+        }
+
+        .records-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .record-card {
+            background: #030712;
+            border-radius: 8px;
+            padding: 14px;
+        }
+        
+        .db1-theme .record-card { border: 1px solid #1e293b; }
+        .db2-theme .record-card { border: 1px solid #14231c; }
+
+        .record-title {
+            font-size: 11px;
+            margin-bottom: 12px;
+            font-weight: bold;
+            padding-left: 8px;
+        }
+        
+        .db1-theme .record-title { border-left: 3px solid var(--db1-blue); color: var(--db1-blue); }
+        .db2-theme .record-title { border-left: 3px solid var(--db2-green); color: var(--db2-green); }
 
         .result-item {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
+            align-items: flex-start;
+            margin-bottom: 10px;
             font-size: 14px;
             border-bottom: 1px solid #111827;
-            padding-bottom: 8px;
+            padding-bottom: 6px;
         }
 
         .result-item:last-child {
@@ -170,36 +225,79 @@
             padding-bottom: 0;
         }
 
+        .telecom-meta-block {
+            background-color: #090f1c;
+            border: 1px solid #1e293b;
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin-top: 12px;
+        }
+
+        .meta-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            padding: 5px 0;
+            border-bottom: 1px dashed #030712;
+        }
+
+        .meta-row:last-child {
+            border-bottom: none;
+        }
+
+        .meta-label {
+            color: var(--text-muted);
+        }
+
+        .meta-val {
+            color: #ffffff;
+            font-weight: bold;
+            text-align: right;
+            word-break: break-all;
+        }
+
         .label-with-icon {
             display: flex;
             align-items: center;
             gap: 10px;
             color: var(--text-muted);
+            white-space: nowrap;
         }
 
         .label-with-icon svg {
             width: 16px;
             height: 16px;
             fill: none;
-            stroke: var(--accent-blue);
             stroke-width: 2;
             stroke-linecap: round;
             stroke-linejoin: round;
         }
 
+        .db1-theme .label-with-icon svg { stroke: var(--db1-blue); }
+        .db2-theme .label-with-icon svg { stroke: var(--db2-green); }
+
         .result-item span.res-value {
             color: #ffffff;
             font-weight: bold;
             text-align: right;
+            word-break: break-word;
+            padding-left: 15px;
+        }
+
+        .inner-error {
+            font-size: 13px;
+            text-align: center;
+            padding: 10px;
+            color: var(--text-muted);
         }
 
         .error-box {
             margin-top: 20px;
             padding: 12px;
             border-radius: 8px;
-            background: rgba(239, 68, 68, 0.1);
+            background: rgba(244, 63, 94, 0.1);
             color: var(--error-red);
-            border: 1px solid rgba(239, 68, 68, 0.3);
+            border: 1px solid rgba(244, 63, 94, 0.3);
             display: none;
             font-size: 14px;
             text-align: center;
@@ -210,78 +308,34 @@
 
 <div class="container">
     <h1>STF SOG14 OSINT</h1>
-    <p class="subtitle">Target Intelligence Database</p>
+    <p class="subtitle">Dual-Routing Intelligence Hub</p>
     
     <div class="input-group">
-        <input type="text" id="phoneNumber" placeholder="Enter number (gaps auto-fixed)" onkeydown="handleKeyPress(event)">
+        <input type="text" id="phoneNumber" placeholder="Enter 10-digit mobile number" onkeydown="handleKeyPress(event)">
     </div>
-    <button onclick="performLookup()">Execute Query</button>
+    <button onclick="performLookup()">Execute Dual Query</button>
 
-    <div id="loadingText" class="loading">> RUNNING SANITIZATION & FETCHING DATA...</div>
+    <div id="loadingText" class="loading">> PINNING TELEMETRY MATRICES... FETCHING LIVE STREAMS...</div>
     <div id="errorBox" class="error-box"></div>
 
     <div id="resultBox" class="result-box">
-        <div class="result-header">
-            <span>// INTEL RECOVERY SUCCESSFUL</span>
-            <!-- Execution Timer Target UI Element -->
-            <span id="executionTime" style="color: var(--text-muted);"></span>
-        </div>
         
-        <div class="result-item">
-            <div class="label-with-icon">
-                <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                <strong>Target Name:</strong>
+        <div class="server-section db1-theme">
+            <div class="server-header">
+                <span>[CORE_A] DB-1: TRUE CALL MATRIX</span>
+                <span id="timeDb1" style="color: var(--text-muted);">--</span>
             </div>
-            <span id="resName" class="res-value"></span>
+            <div id="db1Wrapper" class="records-container"></div>
         </div>
 
-        <div class="result-item">
-            <div class="label-with-icon">
-                <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-                <strong>Int. Format:</strong>
+        <div class="server-section db2-theme">
+            <div class="server-header">
+                <span>[CORE_B] DB-2: SHERLOCK ENGINE</span>
+                <span id="timeDb2" style="color: var(--text-muted);">--</span>
             </div>
-            <span id="resFormat" class="res-value"></span>
+            <div id="db2Wrapper" class="records-container"></div>
         </div>
 
-        <div class="result-item">
-            <div class="label-with-icon">
-                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
-                <strong>Location:</strong>
-            </div>
-            <span id="resCountry" class="res-value"></span>
-        </div>
-
-        <div class="result-item">
-            <div class="label-with-icon">
-                <svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.58 16.11a6 6 0 0 1 6.83 0"></path><line x1="12" y1="20" x2="12.01" y2="20" stroke-width="3"></line></svg>
-                <strong>Carrier Network:</strong>
-            </div>
-            <span id="resCarrier" class="res-value"></span>
-        </div>
-
-        <div class="result-item">
-            <div class="label-with-icon">
-                <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                <strong>Spam Flag:</strong>
-            </div>
-            <span id="resSpam" class="res-value"></span>
-        </div>
-
-        <div class="result-item">
-            <div class="label-with-icon">
-                <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
-                <strong>WhatsApp Node:</strong>
-            </div>
-            <span id="resWhatsapp" class="res-value"></span>
-        </div>
-
-        <div class="result-item">
-            <div class="label-with-icon">
-                <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                <strong>Telegram Node:</strong>
-            </div>
-            <span id="resTelegram" class="res-value"></span>
-        </div>
     </div>
 </div>
 
@@ -293,78 +347,145 @@ function handleKeyPress(event) {
 }
 
 async function performLookup() {
-    let numberInput = document.getElementById('phoneNumber').value;
+    let rawInput = document.getElementById('phoneNumber').value;
     const loadingText = document.getElementById('loadingText');
     const resultBox = document.getElementById('resultBox');
     const errorBox = document.getElementById('errorBox');
+    
+    const db1Wrapper = document.getElementById('db1Wrapper');
+    const db2Wrapper = document.getElementById('db2Wrapper');
 
     resultBox.style.display = 'none';
     errorBox.style.display = 'none';
+    db1Wrapper.innerHTML = ''; 
+    db2Wrapper.innerHTML = '';
+    document.getElementById('timeDb1').innerText = '--';
+    document.getElementById('timeDb2').innerText = '--';
 
-    numberInput = numberInput.replace(/[\s\-\(\)]/g, '');
+    let digitsOnly = rawInput.replace(/\D/g, '');
 
-    if (!numberInput) {
-        errorBox.innerText = "CRITICAL: Target parameter missing.";
+    if (digitsOnly.length === 12 && digitsOnly.startsWith('91')) {
+        digitsOnly = digitsOnly.substring(2);
+    } else if (digitsOnly.length === 11 && digitsOnly.startsWith('0')) {
+        digitsOnly = digitsOnly.substring(1);
+    }
+
+    if (digitsOnly.length !== 10) {
+        errorBox.innerText = `CRITICAL CONFIG FAULT:\nInput must resolve to exactly 10 digits.\nDetected: ${digitsOnly.length} digits.`;
         errorBox.style.display = 'block';
         return;
     }
 
-    if (/^\d{10}$/.test(numberInput)) {
-        numberInput = '91' + numberInput;
-    }
-    
-    if (!numberInput.startsWith('+')) {
-        numberInput = '+' + numberInput;
-    }
-
     loadingText.style.display = 'block';
 
-    // Start benchmark clock right before network call
-    const startTime = performance.now();
+    const query10Digit = digitsOnly;
+    const queryWithCountryCode = '+91' + digitsOnly;
 
-    const url = "https://api-developers-sherlock-osint.sherlock-dev.workers.dev/api/number";
-    
-    try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
-            },
-            body: JSON.stringify({ number: numberInput })
-        });
+    const urlDb1 = `https://true-call-check.vercel.app/api/truecallcheckApi?IndNum=${query10Digit}`;
+    const urlDb2 = `https://api-developers-sherlock-osint.sherlock-dev.workers.dev/api/number`;
 
-        const r = await response.json();
-        loadingText.style.display = 'none';
+    const startDb1 = performance.now();
+    const fetchDb1 = fetch(urlDb1).then(async r => {
+        const elapsed = (performance.now() - startDb1).toFixed(0);
+        if(!r.ok) throw new Error(`HTTP ${r.status}`);
+        return { data: await r.json(), time: elapsed };
+    });
 
-        if (r && r.success) {
-            const d = r.data;
-            const social = d.social || {};
+    const startDb2 = performance.now();
+    const fetchDb2 = fetch(urlDb2, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0' },
+        body: JSON.stringify({ number: queryWithCountryCode })
+    }).then(async r => {
+        const elapsed = (performance.now() - startDb2).toFixed(0);
+        if(!r.ok) throw new Error(`HTTP ${r.status}`);
+        return { data: await r.json(), time: elapsed };
+    });
 
-            document.getElementById('resName').innerText = d.name || 'UNKNOWN_IDENTITY';
-            document.getElementById('resFormat').innerText = d.international_format || 'N/A';
-            document.getElementById('resCountry').innerText = `${d.location || 'N/A'} (${d.country || 'N/A'})`;
-            document.getElementById('resCarrier').innerText = d.carrier || 'N/A';
+    const results = await Promise.allSettled([fetchDb1, fetchDb2]);
+    loadingText.style.display = 'none';
+    resultBox.style.display = 'block';
+
+    // --- PARSE CORE A (TRUE CALL DB) ---
+    const resDb1 = results[0];
+    if (resDb1.status === "fulfilled") {
+        document.getElementById('timeDb1').innerText = `[${resDb1.value.time}ms]`;
+        const rawResponse = resDb1.value.data;
+
+        if (rawResponse && rawResponse.data && Array.isArray(rawResponse.data) && rawResponse.data.length > 0) {
+            rawResponse.data.forEach((record, index) => {
+                const card = document.createElement('div');
+                card.className = 'record-card';
+                
+                let operatorName = 'N/A';
+                let circleName = record.circle || 'N/A';
+                if (record.circle && record.circle.includes(';')) {
+                    const parts = record.circle.split(';');
+                    operatorName = parts[0] || 'N/A';
+                    circleName = parts[1] || 'N/A';
+                }
+
+                card.innerHTML = `
+                    <div class="record-title">[PROFILE_ENTRY_0${index + 1}]</div>
+                    <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg><strong>Full Name:</strong></div><span class="res-value">${record.name || 'NOT_DECLARED'}</span></div>
+                    <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg><strong>Father Name:</strong></div><span class="res-value">${record.father_name || 'N/A'}</span></div>
+                    <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg><strong>Mobile:</strong></div><span class="res-value">${record.mobile || 'N/A'}</span></div>
+                    <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"></path><circle cx="12" cy="10" r="3"></circle></svg><strong>Address:</strong></div><span class="res-value">${record.address || 'N/A'}</span></div>
+                    
+                    <div class="telecom-meta-block">
+                        <div class="meta-row"><span class="meta-label">Operator:</span><span class="meta-val">${operatorName}</span></div>
+                        <div class="meta-row"><span class="meta-label">Circle:</span><span class="meta-val">${circleName}</span></div>
+                        <div class="meta-row"><span class="meta-label">Document No:</span><span class="meta-val">${record.DocumentNumber || 'N/A'}</span></div>
+                        <div class="meta-row"><span class="meta-label">Email:</span><span class="meta-val" style="text-transform:lowercase;">${record.email || 'N/A'}</span></div>
+                        <div class="meta-row"><span class="meta-label">Alt Num 1:</span><span class="meta-val">${record.alt_mobile || 'N/A'}</span></div>
+                        <div class="meta-row"><span class="meta-label">Alt Num 2:</span><span class="meta-val">${record.alt_mobile2 || 'N/A'}</span></div>
+                        <div class="meta-row"><span class="meta-label">Alt Num 3:</span><span class="meta-val">${record.alt_mobile3 || 'N/A'}</span></div>
+                        <div class="meta-row"><span class="meta-label">Alt Num 4:</span><span class="meta-val">${record.alt_mobile4 || 'N/A'}</span></div>
+                    </div>
+                `;
+                db1Wrapper.appendChild(card);
+            });
             
-            document.getElementById('resSpam').innerHTML = d.is_spam ? '<span style="color:#ef4444;">🚨 TRUE (HIGH RISK)</span>' : '<span style="color:#10b981;">✅ CLEAR</span>';
-            document.getElementById('resWhatsapp').innerHTML = social.whatsapp ? '<span style="color:#10b981;">ACTIVE</span>' : '<span style="color:#ef4444;">INACTIVE</span>';
-            document.getElementById('resTelegram').innerHTML = social.telegram ? '<span style="color:#10b981;">ACTIVE</span>' : '<span style="color:#ef4444;">INACTIVE</span>';
-
-            // Calculate total execution latency delta
-            const endTime = performance.now();
-            const timeTaken = (endTime - startTime).toFixed(0); // Rounded to nearest millisecond
-            document.getElementById('executionTime').innerText = `[${timeTaken}ms]`;
-
-            resultBox.style.display = 'block';
+            // Filtered notice script validation checker block
+            if(rawResponse.notice && !rawResponse.notice.includes("@TheAdvanceBots")) {
+                const noticeDiv = document.createElement('div');
+                noticeDiv.className = 'system-notice';
+                noticeDiv.innerHTML = `<strong>NOTICE:</strong> ${rawResponse.notice}`;
+                db1Wrapper.appendChild(noticeDiv);
+            }
         } else {
-            errorBox.innerText = "ERROR: No records matching signature found.";
-            errorBox.style.display = 'block';
+            db1Wrapper.innerHTML = '<div class="inner-error">> No matching records registered in Core Alpha database.</div>';
         }
-    } catch (error) {
-        loadingText.style.display = 'none';
-        errorBox.innerText = "NETWORK ERROR: Connection to terminal refused.";
-        errorBox.style.display = 'block';
-        console.error(error);
+    } else {
+        db1Wrapper.innerHTML = `<div class="inner-error" style="color:var(--error-red);">CORE_A SYSTEM FAULT: ${resDb1.reason.message}</div>`;
+    }
+
+    // --- PARSE CORE B (SHERLOCK ENGINE) ---
+    const resDb2 = results[1];
+    if (resDb2.status === "fulfilled") {
+        document.getElementById('timeDb2').innerText = `[${resDb2.value.time}ms]`;
+        const r2 = resDb2.value.data;
+
+        if (r2 && r2.success && r2.data) {
+            const d = r2.data;
+            const social = d.social || {};
+            const card = document.createElement('div');
+            card.className = 'record-card';
+            card.innerHTML = `
+                <div class="record-title">[OSINT_INDEX_SIGNATURE]</div>
+                <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg><strong>ID Name:</strong></div><span class="res-value">${d.name || 'UNKNOWN'}</span></div>
+                <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"></path></svg><strong>Location:</strong></div><span class="res-value">${d.location || 'N/A'} (${d.country || 'N/A'})</span></div>
+                <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M2 22h20M2 17h20M2 12h20M2 7h20"></path></svg><strong>Carrier:</strong></div><span class="res-value">${d.carrier || 'N/A'}</span></div>
+                <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M12 22v-9M9 15l3-3 3 3"></path></svg><strong>Spam Flag:</strong></div><span class="res-value">${d.is_spam ? '<span style="color:var(--error-red);">🚨 SPAM RISK</span>' : '<span style="color:var(--db2-green);">✅ CLEAR</span>'}</span></div>
+                <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg><strong>WhatsApp:</strong></div><span class="res-value">${social.whatsapp ? '<span style="color:var(--db2-green);">ACTIVE</span>' : '<span style="color:var(--error-red);">INACTIVE</span>'}</span></div>
+                <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg><strong>Telegram:</strong></div><span class="res-value">${social.telegram ? '<span style="color:var(--db2-green);">ACTIVE</span>' : '<span style="color:var(--error-red);">INACTIVE</span>'}</span></div>
+            `;
+            db2Wrapper.appendChild(card);
+        } else {
+            db2Wrapper.innerHTML = '<div class="inner-error">> No matching signatures logged in Core Beta cluster.</div>';
+        }
+    } else {
+        db2Wrapper.innerHTML = `<div class="inner-error" style="color:var(--error-red);">CORE_B SYSTEM FAULT: ${resDb2.reason.message}</div>`;
     }
 }
 </script>
