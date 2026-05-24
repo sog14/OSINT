@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>STF SOG14 OSINT</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root {
             --bg-color: #060a13;
@@ -71,15 +72,6 @@
             margin-bottom: 5px;
         }
 
-        p.subtitle {
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 11px;
-            margin-bottom: 30px;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-        }
-
         .search-mode-toggle {
             display: flex;
             background: #020617;
@@ -122,6 +114,12 @@
             margin-bottom: 20px;
         }
 
+        .input-row-split {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
         input[type="text"] {
             width: 100%;
             padding: 14px 16px;
@@ -146,19 +144,25 @@
             box-shadow: 0 0 12px var(--imei-glow);
         }
 
+        .search-actions-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
         button.exec-btn {
-            width: 100%;
             background: linear-gradient(135deg, #0284c7, #0369a1);
             color: white;
             border: none;
-            padding: 14px;
-            font-size: 15px;
+            padding: 14px 8px;
+            font-size: 11px;
             font-weight: bold;
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.2s ease;
             text-transform: uppercase;
-            letter-spacing: 1.5px;
+            letter-spacing: 1px;
             font-family: inherit;
             box-shadow: 0 4px 12px rgba(3, 105, 161, 0.3);
         }
@@ -166,6 +170,43 @@
         body.imei-active button.exec-btn {
             background: linear-gradient(135deg, #7c3aed, #6d28d9);
             box-shadow: 0 4px 12px rgba(109, 40, 217, 0.3);
+        }
+
+        button.exec-btn:hover {
+            opacity: 0.95;
+            box-shadow: 0 0 12px var(--db1-blue);
+        }
+
+        body.imei-active button.exec-btn:hover {
+            box-shadow: 0 0 12px var(--imei-purple);
+        }
+
+        .action-toolbar {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .tool-btn {
+            flex: 1;
+            background: #1e293b;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            font-size: 13px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+            letter-spacing: 1px;
+        }
+
+        .tool-btn:hover {
+            background: #334155;
+            border-color: var(--db1-blue);
+            color: var(--db1-blue);
         }
 
         .loading {
@@ -346,7 +387,7 @@
 
         .error-box {
             margin-top: 20px;
-            padding: 12px;
+            padding: 14px;
             border-radius: 8px;
             background: rgba(244, 63, 94, 0.1);
             color: var(--error-red);
@@ -354,6 +395,90 @@
             display: none;
             font-size: 14px;
             text-align: center;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            line-height: 1.5;
+        }
+
+        /* 📋 REPLICATED EMBEDDED PRINT DISCLAIMER STYLES */
+        .print-disclaimer-wrapper {
+            display: none; /* Hidden on standard interactive UI screens */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            margin-bottom: 25px;
+        }
+        .disclaimer-amber-box {
+            border: 1px solid #fde047;
+            background-color: #fefce8;
+            border-radius: 8px;
+            padding: 15px;
+            color: #1e293b;
+            font-size: 12px;
+            line-height: 1.6;
+            text-align: justify;
+        }
+        .disclaimer-red-box {
+            border: 1px solid #fca5a5;
+            background-color: #fef2f2;
+            border-radius: 8px;
+            padding: 15px;
+            color: #991b1b;
+            font-size: 12px;
+            line-height: 1.6;
+            margin-top: 15px;
+            text-align: justify;
+        }
+
+        /* 🖨️ NATIVE ENGINE LAYOUT OVERRIDES */
+        @media print {
+            html, body {
+                height: auto !important;
+                min-height: 0 !important; /* FIXED: Destroys the empty first blank page bug */
+                background: #ffffff !important; 
+                color: #000000 !important; 
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+            .container { 
+                background: #ffffff !important; 
+                box-shadow: none !important; 
+                border: none !important;
+                padding: 0 !important; 
+                max-width: 100% !important;
+                display: block !important;
+            }
+            h1 { 
+                color: #000000 !important; 
+                border-bottom: 2px solid #000000 !important;
+                margin-bottom: 25px !important;
+                text-shadow: none !important;
+            }
+            .print-disclaimer-wrapper {
+                display: block !important; /* Enforces absolute presentation on PDF/Printers */
+            }
+            .server-section { 
+                background: #ffffff !important; 
+                border: 1px solid #cbd5e1 !important; 
+                padding: 15px !important; 
+                margin-bottom: 20px !important;
+                page-break-inside: avoid !important;
+            }
+            .record-card { 
+                background: #ffffff !important; 
+                border: 1px solid #e2e8f0 !important; 
+                color: #000000 !important;
+                page-break-inside: avoid !important;
+            }
+            .res-value, .meta-val { 
+                color: #000000 !important; 
+            }
+            .telecom-meta-block { 
+                background: #f8fafc !important; 
+                border: 1px solid #cbd5e1 !important;
+            }
+            .search-mode-toggle, .input-group, .input-row-split, .search-actions-grid, .action-toolbar, .loading, #timeDb1, #timeDb2, #timeImei { 
+                display: none !important; 
+            }
         }
     </style>
 </head>
@@ -363,20 +488,45 @@
     <h1>STF SOG14 OSINT</h1>
     
     <div class="search-mode-toggle">
-        <button class="toggle-btn active" data-mode="phone" onclick="switchMode('phone')">Phone Search</button>
+        <button class="toggle-btn active" data-mode="phone" onclick="switchMode('phone')">Target Matrix</button>
         <button class="toggle-btn" data-mode="imei" onclick="switchMode('imei')">IMEI Search</button>
     </div>
     
-    <div class="input-group">
-        <input type="text" id="targetInput" placeholder="Enter 10-digit mobile number" onkeydown="handleKeyPress(event)">
+    <div class="input-group" id="singleInputContainer">
+        <input type="text" id="targetInput" placeholder="Enter Mobile / Doc No" onkeydown="handleKeyPress(event)">
     </div>
-    <button class="exec-btn" onclick="executeSearch()">Execute Query</button>
+
+    <div class="input-row-split" id="splitInputContainer" style="display:none;">
+        <input type="text" id="nameInput" placeholder="Enter Name">
+        <input type="text" id="fatherInput" placeholder="Enter Father Name" onkeydown="handleKeyPress(event)">
+    </div>
+
+    <div class="search-actions-grid" id="searchActionGrid">
+        <button class="exec-btn" onclick="triggerSearch('phone')">Search Phone</button>
+        <button class="exec-btn" onclick="triggerSearch('doc')">Search Doc</button>
+        <button class="exec-btn" onclick="triggerSearch('name')">Name + Father</button>
+    </div>
+
+    <div class="action-toolbar" id="exportToolbar" style="display:none;">
+        <button class="tool-btn" onclick="downloadTextReport()">Save TXT</button>
+        <button class="tool-btn" onclick="downloadPdfReport()">Save PDF</button>
+    </div>
 
     <div id="loadingText" class="loading">> PINNING TELEMETRY MATRICES... FETCHING LIVE STREAMS...</div>
     <div id="errorBox" class="error-box"></div>
 
     <div id="resultBox" class="result-box">
         
+        <div class="print-disclaimer-wrapper">
+            <div class="disclaimer-amber-box">
+                <strong>CONFIDENTIAL / DISCLAIMER :</strong> For authorized law enforcement officers only.<br><br>
+                SOG14 OSINT Report (LEO Use Only): This report is intended solely for authorized Indian law-enforcement officers for legitimate investigative purposes. By requesting/using this report, you self-attest that you are an authorized officer and that you have either the data subject's explicit consent OR a lawful basis/authorization under applicable law/agency policy. Do NOT forward/share to WhatsApp groups, Telegram, social media, personal email, or consumer cloud drives; share/store only within official government systems/accounts with appropriate access controls. Information is compiled from public/legal sources and legally verified tools; SOG14 does not provide, access, or use leaked/breached datasets (e.g., SDR, Aadhar/Aadhaar, ICMR), even with consent; any "appears in known public breach lists / account exist" flag is only an exposure indicator obtained via lawful breach-notification services, and leaked credentials/datasets are neither accessed nor stored. SOG14 maintains no proprietary datasets; information is retrieved in real time from licensed third-party APIs and public sources in response to authorized officer requests; SOG14 acts solely as an intermediary to fetch/format such data and does not audit or control those external sources. OSINT findings are indicative and must be independently verified through official channels before any legal action or court use. SOG14 does not retain report contents after delivery; for abuse-prevention and audit, minimal metadata (requesting phone number, timestamp, query type, transaction ID) may be retained for up to 90 days, encrypted at rest, and auto-deleted thereafter; no FIR/case number or chain-of-custody details are collected in chat. SOG14 acts solely as an intermediary and provides no legal advice; no warranties (express or implied) are made regarding accuracy, completeness, or fitness for purpose; the requesting agency is responsible for lawful and proportionate use in line with applicable law and internal policy.
+            </div>
+            <div class="disclaimer-red-box">
+                <strong>Important Note:</strong> SOG14 does not provide, access, or use leaked or breached data, such as SDR, Aadhar/Aadhaar, or ICMR data. Such activity is illegal under the Information Technology Act, 2000—even with user consent—and may also attract offences under the Bharatiya Nyaya Sanhita (BNS). Unlike some Telegram bots and spammers that share such data under the guise of OSINT, we strictly use legal sources (e.g., public records, trusted APIs). We do not encourage or support the access or use of illegal data under any circumstances.
+            </div>
+        </div>
+
         <div id="phoneResultsGroup">
             <div class="server-section db1-theme">
                 <div class="server-header">
@@ -418,31 +568,71 @@
 
 <script>
 let currentMode = 'phone';
+let activePhoneSearchSubMode = 'phone'; 
 const HICELLTEK_API_TOKEN = 'WRITE_YOUR_HICELLTEK_API_TOKEN_HERE';
+
+// Hardcoded verified active registration key mapping string
+const SCRAPER_API_KEY = '2165047d8e686d530cdf1cb68f2a1f9a';
 
 function switchMode(mode) {
     currentMode = mode;
-    const input = document.getElementById('targetInput');
+    const singleContainer = document.getElementById('singleInputContainer');
+    const splitContainer = document.getElementById('splitInputContainer');
+    const actionGrid = document.getElementById('searchActionGrid');
     const buttons = document.querySelectorAll('.toggle-btn');
     buttons.forEach(btn => btn.classList.remove('active'));
     document.querySelector(`.toggle-btn[data-mode="${mode}"]`).classList.add('active');
     
     if(mode === 'phone') {
         document.body.classList.remove('imei-active');
-        input.placeholder = "Enter 10-digit mobile number";
+        actionGrid.style.display = 'grid';
+        if(activePhoneSearchSubMode === 'name') {
+            singleContainer.style.display = 'none';
+            splitContainer.style.display = 'flex';
+        } else {
+            singleContainer.style.display = 'block';
+            splitContainer.style.display = 'none';
+            document.getElementById('targetInput').placeholder = "Enter Mobile / Doc No";
+        }
     } else {
         document.body.classList.add('imei-active');
-        input.placeholder = "Enter 15-digit IMEI terminal ID";
+        actionGrid.style.display = 'none';
+        splitContainer.style.display = 'none';
+        singleContainer.style.display = 'block';
+        document.getElementById('targetInput').placeholder = "Enter 15-digit IMEI terminal ID";
     }
 }
 
 function handleKeyPress(event) {
-    if (event.key === "Enter") executeSearch();
+    if (event.key === "Enter") {
+        if(currentMode === 'phone') performPhoneLookup(activePhoneSearchSubMode);
+        else performImeiLookup();
+    }
 }
 
-function executeSearch() {
-    if (currentMode === 'phone') performPhoneLookup();
-    else performImeiLookup();
+function triggerSearch(subMode) {
+    activePhoneSearchSubMode = subMode;
+    const singleContainer = document.getElementById('singleInputContainer');
+    const splitContainer = document.getElementById('splitInputContainer');
+    const mainInput = document.getElementById('targetInput');
+
+    if(subMode === 'name') {
+        singleContainer.style.display = 'none';
+        splitContainer.style.display = 'flex';
+        
+        let nVal = document.getElementById('nameInput').value.trim();
+        let fVal = document.getElementById('fatherInput').value.trim();
+        if(nVal && fVal) {
+            performPhoneLookup('name');
+        }
+    } else {
+        splitContainer.style.display = 'none';
+        singleContainer.style.display = 'block';
+        if(subMode === 'phone') mainInput.placeholder = "Enter 10-digit mobile number";
+        if(subMode === 'doc') mainInput.placeholder = "Enter Document identifier code";
+        
+        if(mainInput.value.trim()) performPhoneLookup(subMode);
+    }
 }
 
 function cleanTo10Digits(inputStr) {
@@ -453,11 +643,11 @@ function cleanTo10Digits(inputStr) {
     return digits.length === 10 ? digits : null;
 }
 
-async function performPhoneLookup() {
-    let rawInput = document.getElementById('targetInput').value;
+async function performPhoneLookup(searchType) {
     const loadingText = document.getElementById('loadingText');
     const resultBox = document.getElementById('resultBox');
     const errorBox = document.getElementById('errorBox');
+    const exportToolbar = document.getElementById('exportToolbar');
     
     document.getElementById('phoneResultsGroup').style.display = 'block';
     document.getElementById('imeiResultsGroup').style.display = 'none';
@@ -469,85 +659,111 @@ async function performPhoneLookup() {
 
     resultBox.style.display = 'none';
     errorBox.style.display = 'none';
+    exportToolbar.style.display = 'none';
     db1Wrapper.innerHTML = ''; 
     db2Wrapper.innerHTML = '';
     recursiveWrapper.innerHTML = '';
 
-    let mainNumber = cleanTo10Digits(rawInput);
-
-    if (!mainNumber) {
-        errorBox.innerText = `CRITICAL CONFIG FAULT:\nInput must resolve to exactly 10 digits.`;
-        errorBox.style.display = 'block';
-        return;
-    }
-
     loadingText.style.display = 'block';
-    loadingText.innerText = "> PINNING TELEMETRY MATRICES... FETCHING LIVE STREAMS...";
+    loadingText.innerText = "> INITIALIZING CYBER DEFENSE INTEL CONSOLE POOL...";
 
     let processedNumbers = new Set();
-    processedNumbers.add(mainNumber);
-
-    const urlDb1 = `https://true-call-check.vercel.app/api/truecallcheckApi?IndNum=${mainNumber}`;
-    const urlDb2 = `https://api-developers-sherlock-osint.sherlock-dev.workers.dev/api/number`;
-
-    const startDb1 = performance.now();
-    const fetchDb1 = fetch(urlDb1).then(async r => {
-        if(!r.ok) throw new Error();
-        return { data: await r.json(), time: (performance.now() - startDb1).toFixed(0) };
-    });
-
-    const startDb2 = performance.now();
-    const fetchDb2 = fetch(urlDb2, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0' },
-        body: JSON.stringify({ number: '+91' + mainNumber })
-    }).then(async r => {
-        if(!r.ok) throw new Error();
-        return { data: await r.json(), time: (performance.now() - startDb2).toFixed(0) };
-    });
-
-    const results = await Promise.allSettled([fetchDb1, fetchDb2]);
-    loadingText.style.display = 'none';
-    resultBox.style.display = 'block';
-
     let discoveryQueue = [];
+    let queryValue = "";
+    let mainNumber = null;
 
-    // Parse DB-1 Primary
-    if (results[0].status === "fulfilled") {
-        document.getElementById('timeDb1').innerText = `[${results[0].value.time}ms]`;
-        const rawResponse = results[0].value.data;
+    if (searchType === 'phone') {
+        let inputVal = document.getElementById('targetInput').value.trim();
+        mainNumber = cleanTo10Digits(inputVal);
+        if (!mainNumber) {
+            loadingText.style.display = 'none';
+            errorBox.innerText = `CRITICAL CONFIG FAULT:\nInput must resolve to exactly 10 digits.`;
+            errorBox.style.display = 'block';
+            return;
+        }
+        processedNumbers.add(mainNumber);
+        queryValue = mainNumber;
+    } else if (searchType === 'doc') {
+        let inputVal = document.getElementById('targetInput').value.trim();
+        if(!inputVal) {
+            loadingText.style.display = 'none';
+            errorBox.innerText = "CRITICAL CONFIG FAULT:\nDocument entry parameter missing.";
+            errorBox.style.display = 'block';
+            return;
+        }
+        queryValue = inputVal;
+    } else if (searchType === 'name') {
+        let nameVal = document.getElementById('nameInput').value.trim();
+        let fatherVal = document.getElementById('fatherInput').value.trim();
+        if(!nameVal || !fatherVal) {
+            loadingText.style.display = 'none';
+            errorBox.innerText = "CRITICAL CONFIG FAULT:\nBoth Name and Father inputs are required.";
+            errorBox.style.display = 'block';
+            return;
+        }
+        queryValue = `${fatherVal} ${nameVal}`;
+    }
+
+    const targetApiUrl = `https://true-call-check.vercel.app/api/truecallcheckApi?IndNum=${encodeURIComponent(queryValue)}`;
+    const proxyTunnelUrl = `https://api.scraperapi.com/?api_key=${SCRAPER_API_KEY}&url=${encodeURIComponent(targetApiUrl)}`;
+
+    try {
+        const startDb1 = performance.now();
+        const responseDb1 = await fetch(proxyTunnelUrl);
+        if (!responseDb1.ok) throw new Error(`Status ${responseDb1.status}`);
+        const rawResponse = await responseDb1.json();
+        document.getElementById('timeDb1').innerText = `[${(performance.now() - startDb1).toFixed(0)}ms]`;
+
+        // Intercept Filter for Server-Side Wait Status Notices
+        if (rawResponse && rawResponse.data && rawResponse.data[0] && rawResponse.data[0].howmuchyouneedtowait) {
+            loadingText.style.display = 'none';
+            let waitSeconds = parseInt(rawResponse.data[0].howmuchyouneedtowait) || 35;
+            errorBox.style.display = 'block';
+            errorBox.innerHTML = `== TERMINAL SECURITY RATE-LIMIT INTERCEPT ==<br>SECURITY OVERHEAT PROTECTION ACTIVE.<br>YOU MUST WAIT <span id="countdownTimer" style="color:var(--error-red); font-size:16px;">${waitSeconds}</span> SECONDS BEFORE RUNNING THE NEXT SEARCH.`;
+            let interval = setInterval(() => {
+                waitSeconds--;
+                document.getElementById('countdownTimer').innerText = waitSeconds;
+                if (waitSeconds <= 0) {
+                    clearInterval(interval);
+                    errorBox.style.display = 'none';
+                }
+            }, 1000);
+            return; 
+        }
+
         if (rawResponse && rawResponse.data && Array.isArray(rawResponse.data) && rawResponse.data.length > 0) {
+            exportToolbar.style.display = 'flex'; 
+            resultBox.style.display = 'block';
             rawResponse.data.forEach((record, index) => {
+                if(!record) return;
+
                 const card = document.createElement('div');
                 card.className = 'record-card';
-                let operatorName = 'N/A', circleName = record.circle || 'N/A';
-                if (record.circle && record.circle.includes(';')) {
-                    const parts = record.circle.split(';');
-                    operatorName = parts[0]; circleName = parts[1];
+                let operatorName = 'N/A', circleName = 'N/A';
+                
+                if (record.circle && typeof record.circle === 'string') {
+                    if (record.circle.includes(';')) {
+                        const parts = record.circle.split(';');
+                        operatorName = parts[0] || 'N/A'; circleName = parts[1] || 'N/A';
+                    } else { circleName = record.circle; }
                 }
 
                 if(record.mobile) {
-                    let mClean = cleanTo10Digits(record.mobile);
-                    if(mClean && !processedNumbers.has(mClean)) {
-                        discoveryQueue.push(mClean);
-                        processedNumbers.add(mClean);
-                    }
+                    let mClean = cleanTo10Digits(String(record.mobile));
+                    if(mClean && !processedNumbers.has(mClean)) { discoveryQueue.push(mClean); processedNumbers.add(mClean); }
                 }
 
                 ['alt_mobile', 'alt_mobile2', 'alt_mobile3', 'alt_mobile4'].forEach(k => {
                     if(record[k]) {
-                        let cleaned = cleanTo10Digits(record[k]);
-                        if(cleaned && !processedNumbers.has(cleaned)) {
-                            discoveryQueue.push(cleaned);
-                            processedNumbers.add(cleaned);
-                        }
+                        let cleaned = cleanTo10Digits(String(record[k]));
+                        if(cleaned && !processedNumbers.has(cleaned)) { discoveryQueue.push(cleaned); processedNumbers.add(cleaned); }
                     }
                 });
 
                 card.innerHTML = `
                     <div class="record-title">[PROFILE_ENTRY_0${index + 1}]</div>
-                    <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg><strong>Full Name:</strong></div><span class="res-value">${record.name || 'NOT_DECLARED'}</span></div>
-                    <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path></svg><strong>Father Name:</strong></div><span class="res-value">${record.father_name || 'N/A'}</span></div>
+                    <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg><strong>Full Name:</strong></div><span class="res-value">${record.father_name || 'NOT_DECLARED'}</span></div>
+                    <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path></svg><strong>Father Name:</strong></div><span class="res-value">${record.name || 'N/A'}</span></div>
                     <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect></svg><strong>Mobile:</strong></div><span class="res-value">${record.mobile || 'N/A'}</span></div>
                     <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"></path></svg><strong>Address:</strong></div><span class="res-value">${record.address || 'N/A'}</span></div>
                     <div class="telecom-meta-block">
@@ -563,96 +779,116 @@ async function performPhoneLookup() {
                 `;
                 db1Wrapper.appendChild(card);
             });
-        } else { db1Wrapper.innerHTML = '<div class="inner-error">> No matching records in Core Alpha database.</div>'; }
-    } else { db1Wrapper.innerHTML = '<div class="inner-error">CORE_A SYSTEM FAULT</div>'; }
+        } else {
+            db1Wrapper.innerHTML = `<div class="inner-error">> Notice: No records resolved inside database indexes.</div>`;
+            resultBox.style.display = 'block';
+        }
+    } catch(err) {
+        db1Wrapper.innerHTML = `<div class="inner-error" style="color:var(--error-red);">CORE_A MATRIX INTERCEPT FAULT</div>`;
+        resultBox.style.display = 'block';
+    }
 
-    // Parse DB-2 Primary
-    if (results[1].status === "fulfilled") {
-        document.getElementById('timeDb2').innerText = `[${results[1].value.time}ms]`;
-        const r2 = results[1].value.data;
-        if (r2 && r2.success && r2.data) {
-            const d = r2.data; const social = d.social || {};
-            const whatsappField = social.whatsapp ? `<a href="https://wa.me/91${mainNumber}" target="_blank" class="status-link">ACTIVE</a>` : `<span style="color:var(--error-red);">INACTIVE</span>`;
-            const telegramField = social.telegram ? `<a href="https://t.me/+91${mainNumber}" target="_blank" class="status-link">ACTIVE</a>` : `<span style="color:var(--error-red);">INACTIVE</span>`;
+    // Parse DB-2 Response
+    if (mainNumber) {
+        try {
+            const startDb2 = performance.now();
+            const responseDb2 = await fetch(`https://api-developers-sherlock-osint.sherlock-dev.workers.dev/api/number`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0' },
+                body: JSON.stringify({ number: '+91' + mainNumber })
+            });
+            document.getElementById('timeDb2').innerText = `[${(performance.now() - startDb2).toFixed(0)}ms]`;
 
-            const card = document.createElement('div');
-            card.className = 'record-card';
-            card.innerHTML = `
-                <div class="record-title">[OSINT_INDEX_SIGNATURE]</div>
-                <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path></svg><strong>ID Name:</strong></div><span class="res-value">${d.name || 'UNKNOWN'}</span></div>
-                <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"></path></svg><strong>Location:</strong></div><span class="res-value">${d.location || 'N/A'}</span></div>
-                <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M2 22h20M2 17h20"></path></svg><strong>Carrier:</strong></div><span class="res-value">${d.carrier || 'N/A'}</span></div>
-                <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg><strong>WhatsApp:</strong></div><span class="res-value">${whatsappField}</span></div>
-                <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line></svg><strong>Telegram:</strong></div><span class="res-value">${telegramField}</span></div>
-            `;
-            db2Wrapper.appendChild(card);
-        } else { db2Wrapper.innerHTML = '<div class="inner-error">> No matching signatures logged in Core Beta cluster.</div>'; }
-    } else { db2Wrapper.innerHTML = '<div class="inner-error">CORE_B SYSTEM FAULT</div>'; }
+            if (responseDb2.ok) {
+                const r2 = await responseDb2.json();
+                if (r2 && r2.success && r2.data) {
+                    exportToolbar.style.display = 'flex';
+                    resultBox.style.display = 'block';
+                    const d = r2.data; const social = d.social || {};
+                    const whatsappField = social.whatsapp ? `<a href="https://wa.me/91${mainNumber}" target="_blank" class="status-link">ACTIVE</a>` : `<span style="color:var(--error-red);">INACTIVE</span>`;
+                    const telegramField = social.telegram ? `<a href="https://t.me/+91${mainNumber}" target="_blank" class="status-link">ACTIVE</a>` : `<span style="color:var(--error-red);">INACTIVE</span>`;
 
-    // DYNAMIC RECURSIVE UNIQUE TRACE PIPELINE
+                    const card = document.createElement('div');
+                    card.className = 'record-card';
+                    card.innerHTML = `
+                        <div class="record-title">[OSINT_INDEX_SIGNATURE]</div>
+                        <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path></svg><strong>ID Name:</strong></div><span class="res-value">${d.name || 'UNKNOWN'}</span></div>
+                        <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"></path></svg><strong>Location:</strong></div><span class="res-value">${d.location || 'N/A'}</span></div>
+                        <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M2 22h20M2 17h20"></path></svg><strong>Carrier:</strong></div><span class="res-value">${d.carrier || 'N/A'}</span></div>
+                        <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg><strong>WhatsApp:</strong></div><span class="res-value">${whatsappField}</span></div>
+                        <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line></svg><strong>Telegram:</strong></div><span class="res-value">${telegramField}</span></div>
+                    `;
+                    db2Wrapper.appendChild(card);
+                } else { db2Wrapper.innerHTML = '<div class="inner-error">> No matching signatures logged in Sherlock cluster.</div>'; }
+            } else { db2Wrapper.innerHTML = '<div class="inner-error">CORE_B SERVICE RESPONSE FAULT</div>'; }
+        } catch(err) {
+            db2Wrapper.innerHTML = '<div class="inner-error">CORE_B NETWORK TRACE ERROR</div>';
+        }
+    } else {
+        db2Wrapper.innerHTML = `<div class="inner-error">> Sherlock core bypassed.</div>`;
+    }
+
+    // --- RECURSIVE LINKAGE SCANNERS ---
     if(discoveryQueue.length > 0) {
         document.getElementById('recursiveSection').style.display = 'block';
+        resultBox.style.display = 'block';
         
         while(discoveryQueue.length > 0) {
             let altNum = discoveryQueue.shift();
-            document.getElementById('recursiveCount').innerText = `Running Multi-Core Trace On Unified Node: ${altNum}...`;
-
-            const recursiveUrlDb1 = `https://true-call-check.vercel.app/api/truecallcheckApi?IndNum=${altNum}`;
-            const recursiveUrlDb2 = `https://api-developers-sherlock-osint.sherlock-dev.workers.dev/api/number`;
-
-            const runRecDb1 = fetch(recursiveUrlDb1).then(r => r.ok ? r.json() : null).catch(() => null);
-            const runRecDb2 = fetch(recursiveUrlDb2, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0' },
-                body: JSON.stringify({ number: '+91' + altNum })
-            }).then(r => r.ok ? r.json() : null).catch(() => null);
+            document.getElementById('recursiveCount').innerText = `RETRIEVING NODE PROFILE: ${altNum}...`;
 
             try {
-                const subResults = await Promise.all([runRecDb1, runRecDb2]);
-                const db1Data = subResults[0];
-                const db2Data = subResults[1];
+                const recursiveUrlDb1 = `https://true-call-check.vercel.app/api/truecallcheckApi?IndNum=${altNum}`;
+                const proxyRecDb1Url = `https://api.scraperapi.com/?api_key=${SCRAPER_API_KEY}&url=${encodeURIComponent(recursiveUrlDb1)}`;
+                
+                const recursiveUrlDb2 = `https://api-developers-sherlock-osint.sherlock-dev.workers.dev/api/number`;
 
-                if ((db1Data && db1Data.data && db1Data.data.length > 0) || (db2Data && db2Data.success && db2Data.data)) {
-                    
-                    // DEEP NESTED SCAN FOR EXTENDED RECURSION LOOPS
-                    if(db1Data && db1Data.data && db1Data.data.length > 0) {
-                        db1Data.data.forEach(subRecord => {
+                const responseRecDb1 = await fetch(proxyRecDb1Url).then(r => r.ok ? r.json() : null).catch(() => null);
+                
+                if (responseRecDb1 && responseRecDb1.data && responseRecDb1.data[0] && responseRecDb1.data[0].howmuchyouneedtowait) {
+                    continue; 
+                }
+
+                const responseRecDb2 = await fetch(recursiveUrlDb2, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0' },
+                    body: JSON.stringify({ number: '+91' + altNum })
+                }).then(r => r.ok ? r.json() : null).catch(() => null);
+
+                if ((responseRecDb1 && responseRecDb1.data && responseRecDb1.data.length > 0) || (responseRecDb2 && responseRecDb2.success && responseRecDb2.data)) {
+                    if(responseRecDb1 && responseRecDb1.data && responseRecDb1.data.length > 0) {
+                        responseRecDb1.data.forEach(subRecord => {
+                            if(!subRecord) return;
                             if(subRecord.mobile) {
                                 let cleanMob = cleanTo10Digits(subRecord.mobile);
-                                if(cleanMob && !processedNumbers.has(cleanMob)) {
-                                    discoveryQueue.push(cleanMob);
-                                    processedNumbers.add(cleanMob);
-                                }
+                                if(cleanMob && !processedNumbers.has(cleanMob)) { discoveryQueue.push(cleanMob); processedNumbers.add(cleanMob); }
                             }
                             ['alt_mobile', 'alt_mobile2', 'alt_mobile3', 'alt_mobile4'].forEach(k => {
                                 if(subRecord[k]) {
-                                    let cleanAlt = cleanTo10Digits(subRecord[k]);
-                                    if(cleanAlt && !processedNumbers.has(cleanAlt)) {
-                                        discoveryQueue.push(cleanAlt);
-                                        processedNumbers.add(cleanAlt);
-                                    }
+                                    let cleanAlt = cleanTo10Digits(String(subRecord[k]));
+                                    if(cleanAlt && !processedNumbers.has(cleanAlt)) { discoveryQueue.push(cleanAlt); processedNumbers.add(cleanAlt); }
                                 }
                             });
                         });
                     }
 
-                    // COMPILE SEAMLESS RENDER FOR LINKED MATRIX CARD
                     const altCard = document.createElement('div');
                     altCard.className = 'record-card';
                     let baseHtml = `<div class="record-title">[LINKED_RELATION_REPORT: ${altNum}]</div>`;
                     
-                    // DB-1 Profile Data Integration
-                    if(db1Data && db1Data.data && db1Data.data.length > 0) {
-                        const rec = db1Data.data[0];
-                        let operatorName = 'N/A', circleName = rec.circle || 'N/A';
-                        if (rec.circle && rec.circle.includes(';')) {
-                            const parts = rec.circle.split(';');
-                            operatorName = parts[0]; circleName = parts[1];
+                    if(responseRecDb1 && responseRecDb1.data && responseRecDb1.data.length > 0) {
+                        const rec = responseRecDb1.data[0];
+                        let operatorName = 'N/A', circleName = 'N/A';
+                        if (rec?.circle && typeof rec.circle === 'string') {
+                            if (rec.circle.includes(';')) {
+                                const parts = rec.circle.split(';');
+                                operatorName = parts[0] || 'N/A'; circleName = parts[1] || 'N/A';
+                            } else { circleName = rec.circle; }
                         }
                         
                         baseHtml += `
-                            <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg><strong>Full Name:</strong></div><span class="res-value" style="color:var(--orange-link);">${rec.name || 'NOT_DECLARED'}</span></div>
-                            <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path></svg><strong>Father Name:</strong></div><span class="res-value">${rec.father_name || 'N/A'}</span></div>
+                            <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg><strong>Full Name:</strong></div><span class="res-value" style="color:var(--orange-link);">${rec.father_name || 'NOT_DECLARED'}</span></div>
+                            <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path></svg><strong>Father Name:</strong></div><span class="res-value">${rec.name || 'N/A'}</span></div>
                             <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"></path></svg><strong>Address:</strong></div><span class="res-value">${rec.address || 'N/A'}</span></div>
                             <div class="telecom-meta-block">
                                 <div class="meta-row"><span class="meta-label">Operator:</span><span class="meta-val">${operatorName}</span></div>
@@ -668,9 +904,8 @@ async function performPhoneLookup() {
                         baseHtml += `<div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path></svg><strong>Full Name:</strong></div><span class="res-value" style="color:var(--text-muted);">NOT REGISTERED IN DB-1</span></div>`;
                     }
 
-                    // DB-2 Sherlock Profile Data Integration (Explicitly added per request for every single link)
-                    if(db2Data && db2Data.success && db2Data.data) {
-                        const d2 = db2Data.data; const soc2 = d2.social || {};
+                    if(responseRecDb2 && responseRecDb2.success && responseRecDb2.data) {
+                        const d2 = responseRecDb2.data; const soc2 = d2.social || {};
                         const waLink = soc2.whatsapp ? `<a href="https://wa.me/91${altNum}" target="_blank" class="status-link">ACTIVE</a>` : `<span style="color:var(--error-red);">INACTIVE</span>`;
                         const tgLink = soc2.telegram ? `<a href="https://t.me/+91${altNum}" target="_blank" class="status-link">ACTIVE</a>` : `<span style="color:var(--error-red);">INACTIVE</span>`;
                         
@@ -693,20 +928,20 @@ async function performPhoneLookup() {
                             </div>`;
                         }
                     } else {
-                        // Append trailing structural element if second core failed
-                        if(baseHtml.includes("telecom-meta-block")) {
-                            baseHtml += `
-                                <div class="meta-row"><span class="meta-label" style="color: var(--error-red);">Sherlock Core:</span><span class="meta-val" style="color: var(--error-red);">INDEX SIGNATURE FAULT</span></div>
-                            </div>`;
-                        }
+                        if(baseHtml.includes("telecom-meta-block")) baseHtml += `</div>`;
                     }
 
                     altCard.innerHTML = baseHtml;
                     recursiveWrapper.appendChild(altCard);
                 }
-            } catch(e) { console.error("Link Core deep sub-query fault.", e); }
+            } catch(e) {}
         }
         document.getElementById('recursiveCount').innerText = `${recursiveWrapper.children.length} Comprehensive Profile Reports Extracted`;
+    }
+    
+    loadingText.style.display = 'none';
+    if(db1Wrapper.children.length > 0 || db2Wrapper.children.length > 0) {
+        exportToolbar.style.display = 'flex';
     }
 }
 
@@ -716,14 +951,15 @@ async function performImeiLookup() {
     const resultBox = document.getElementById('resultBox');
     const errorBox = document.getElementById('errorBox');
     const imeiWrapper = document.getElementById('imeiWrapper');
+    const exportToolbar = document.getElementById('exportToolbar');
 
     document.getElementById('phoneResultsGroup').style.display = 'none';
     document.getElementById('imeiResultsGroup').style.display = 'block';
-    resultBox.style.display = 'none'; errorBox.style.display = 'none'; imeiWrapper.innerHTML = '';
+    resultBox.style.display = 'none'; errorBox.style.display = 'none'; exportToolbar.style.display = 'none'; imeiWrapper.innerHTML = '';
 
     let imeiDigits = rawInput.replace(/\D/g, '');
     if (imeiDigits.length !== 15) {
-        errorBox.innerText = `CRITICAL CONFIG FAULT:\nInput must be a valid 15-digit IMEI structural array.`;
+        errorBox.innerText = `CRITICAL CONFIG FAULT:\nInput must be a valid 15-digit IMEI structural ID.`;
         errorBox.style.display = 'block'; return;
     }
 
@@ -747,6 +983,7 @@ async function performImeiLookup() {
         document.getElementById('timeImei').innerText = `[${(performance.now() - startTime).toFixed(0)}ms]`;
 
         if (resData && (resData.success || resData.status === "success" || resData.data)) {
+            exportToolbar.style.display = 'flex';
             const obj = resData.data || resData.result || resData;
             const card = document.createElement('div');
             card.className = 'record-card';
@@ -767,6 +1004,37 @@ async function performImeiLookup() {
         errorBox.innerText = `TAC CORE BLOCK INTERCEPT ERROR. Check Token configurations.`;
         errorBox.style.display = 'block';
     }
+}
+
+function downloadTextReport() {
+    let nameVal = document.getElementById('nameInput').value.trim();
+    let singleVal = document.getElementById('targetInput').value.trim();
+    let logTitle = activePhoneSearchSubMode === 'name' ? nameVal : singleVal;
+    
+    let textOutput = `=== STF SOG14 OSINT SYSTEM DISPATCH MANIFEST ===\n`;
+    textOutput += `GENERATION TIMESTAMP: ${new Date().toISOString()}\n\n`;
+
+    const cards = document.querySelectorAll('.record-card');
+    cards.forEach(card => {
+        const title = card.querySelector('.record-title')?.innerText || '[DATA_BLOCK]';
+        textOutput += `${title}\n----------------------------------------\n`;
+        card.querySelectorAll('.result-item, .meta-row').forEach(row => {
+            let label = row.querySelector('strong')?.innerText || row.querySelector('.meta-label')?.innerText || 'Label';
+            let val = row.querySelector('.res-value')?.innerText || row.querySelector('.meta-val')?.innerText || 'N/A';
+            textOutput += `${label.replace(':','').padEnd(20)}: ${val.trim()}\n`;
+        });
+        textOutput += `\n`;
+    });
+
+    const blob = new Blob([textOutput], { type: 'text/plain' });
+    const anchor = document.createElement('a');
+    anchor.download = `SOG14_INTEL_DISPATCH_${logTitle.replace(/\s+/g, '_')}.txt`;
+    anchor.href = URL.createObjectURL(blob);
+    anchor.click();
+}
+
+function downloadPdfReport() {
+    window.print();
 }
 </script>
 </body>
