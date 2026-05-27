@@ -1,3 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STF SOG14 OSINT</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #060a13;
+            --panel-bg: #0f172a;
+            --border-color: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --error-red: #f43f5e;
+            --success-green: #10b981;
+            
+            /* Color Themes */
+            --db1-blue: #38bdf8;
+            --db1-glow: rgba(56, 189, 248, 0.15);
+            --db2-green: #10b981;
+            --db2-glow: rgba(16, 185, 129, 0.15);
+            --imei-purple: #a855f7;
+            --imei-glow: rgba(168, 85, 247, 0.15);
+            --orange-link: #f97316;
+            --orange-glow: rgba(249, 115, 22, 0.15);
+            --vehicle-amber: #f59e0b;
+            --manifest-gold: #eab308;
+            --family-pink: #ec4899;
+        }
+
+        body {
+            font-family: 'Courier New', Courier, monospace, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .container {
+            background: var(--panel-bg);
+            padding: 30px;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+            width: 100%;
+            max-width: 650px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--db1-blue), var(--family-pink), var(--db2-green), transparent);
+        }
+
+        h1 {
+            margin-top: 0;
+            font-size: 26px;
+            text-align: center;
+            color: #ffffff;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            text-shadow: 0 0 8px rgba(255,255,255,0.2);
+            margin-bottom: 5px;
+        }
+
+        .search-mode-toggle {
+            display: flex;
+            background: #020617;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 4px;
+            margin-bottom: 25px;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 10px;
+            font-size: 11px;
+            font-weight: bold;
+            font-family: inherit;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .toggle-btn.active[data-mode="phone"] {
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--db1-blue);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+        }
+
+        .toggle-btn.active[data-mode="vehicle"] {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--vehicle-amber);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .toggle-btn.active[data-mode="imei"] {
+            background: rgba(168, 85, 247, 0.15);
+            color: var(--imei-purple);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .input-row-split {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 14px 16px;
+            background-color: #020617;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px;
+            color: #ffffff;
+            outline: none;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--db1-blue);
+            box-shadow: 0 0 12px var(--db1-glow);
+        }
+
+        body.vehicle-active input[type="text"]:focus {
+            border-color: var(--vehicle-amber);
+            box-shadow: 0 0 12px rgba(245, 158, 11, 0.15);
+        }
+
+        body.imei-active input[type="text"]:focus {
+            border-color: var(--imei-purple);
+            box-shadow: 0 0 12px var(--imei-glow);
+        }
+
+        .search-actions-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        button.exec-btn {
+            background: linear-gradient(135deg, #0284c7, #0369a1);
+            color: white;
+            border: none;
+            padding: 14px 8px;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-family: inherit;
+            box-shadow: 0 4px 12px rgba(3, 105, 161, 0.3);
+        }
+
+        body.imei-active button.exec-btn {
+            background: linear-gradient(135deg, #7c3aed, #6d28d9);
+            box-shadow: 0 4px 12px rgba(109, 40, 217, 0.3);
+        }
+
+        button.exec-btn:hover {
+            opacity: 0.95;
+            box-shadow: 0 0 12px var(--db1-blue);
+        }
+
+        body.imei-active button.exec-btn:hover {
+            box-shadow: 0 0 12px var(--imei-purple);
+        }
+
+        button.action-trigger-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #d97706, #b45309);
+            color: white;
+            border: none;
+            padding: 14px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-family: inherit;
+            box-shadow: 0 4px 12px rgba(180, 83, 9, 0.3);
+        }
+        button.action-trigger-btn:hover {
+            opacity: 0.95;
+            box-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
+        }
+
+        .action-toolbar {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .tool-btn {
+            flex: 1;
+            background: #1e293b;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            font-size: 13px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+            letter-spacing: 1px;
+        }
+
+        .tool-btn:hover {
+            background: #334155;
+            border-color: var(--db1-blue);
+            color: var(--db1-blue);
+        }
+
+        .loading {
+            text-align: center;
+            display: none;
+            margin-top: 20px;
+            font-size: 13px;
+            letter-spacing: 1px;
+            animation: pulse 1.5s infinite;
+        }
+        body.vehicle-active .loading { color: var(--vehicle-amber); }
+        body.imei-active .loading { color: var(--imei-purple); }
+        body:not(.imei-active):not(.vehicle-active) .loading { color: var(--db1-blue); }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        .result-box {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .server-section {
+            margin-bottom: 25px;
+            padding: 20px;
+            border-radius: 12px;
+            background: #090f1c;
+        }
+
+        .server-section.db1-theme { border: 1px solid rgba(56, 189, 248, 0.15); box-shadow: 0 4px 20px rgba(0,0,0,0.2), inset 0 0 15px var(--db1-glow); }
+        .server-section.db2-theme { border: 1px solid rgba(16, 185, 129, 0.15); box-shadow: 0 4px 20px rgba(0,0,0,0.2), inset 0 0 15px var(--db2-glow); }
+        .server-section.imei-theme { border: 1px solid rgba(168, 85, 247, 0.15); box-shadow: 0 4px 20px rgba(0,0,0,0.2), inset 0 0 15px var(--imei-glow); }
+        .server-section.vehicle-theme { border: 1px solid rgba(245, 158, 11, 0.15); box-shadow: 0 4px 20px rgba(0,0,0,0.2), inset 0 0 15px rgba(245, 158, 11, 0.05); }
+        .server-section.recursive-theme { border: 1px solid rgba(249, 115, 22, 0.2); box-shadow: 0 4px 20px rgba(0,0,0,0.2), inset 0 0 15px var(--orange-glow); }
+        .server-section.family-theme { border: 1px solid rgba(236, 72, 153, 0.3); box-shadow: 0 4px 20px rgba(0,0,0,0.2), inset 0 0 15px rgba(236, 72, 153, 0.05); }
+        .server-section.master-manifest-theme { border: 1px solid rgba(234, 179, 8, 0.3); box-shadow: 0 4px 25px rgba(234, 179, 8, 0.05); }
+
+        .server-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .db1-theme .server-header { color: var(--db1-blue); border-bottom: 1px dashed rgba(56, 189, 248, 0.2); }
+        .db2-theme .server-header { color: var(--db2-green); border-bottom: 1px dashed rgba(16, 185, 129, 0.2); }
+        .imei-theme .server-header { color: var(--imei-purple); border-bottom: 1px dashed rgba(168, 85, 247, 0.2); }
+        .vehicle-theme .server-header { color: var(--vehicle-amber); border-bottom: 1px dashed rgba(245, 158, 11, 0.2); }
+        .recursive-theme .server-header { color: var(--orange-link); border-bottom: 1px dashed rgba(249, 115, 22, 0.2); }
+        .family-theme .server-header { color: var(--family-pink); border-bottom: 1px dashed rgba(236, 72, 153, 0.2); }
+        .master-manifest-theme .server-header { color: var(--manifest-gold); border-bottom: 1px dashed rgba(234, 179, 8, 0.3); }
+
+        .records-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .record-card {
+            background: #030712;
+            border-radius: 8px;
+            padding: 14px;
+            border: 1px solid #1e293b;
+        }
+        
+        .recursive-theme .record-card { border: 1px solid rgba(249, 115, 22, 0.25); margin-bottom: 10px; }
+
+        .record-title {
+            font-size: 11px;
+            margin-bottom: 12px;
+            font-weight: bold;
+            padding-left: 8px;
+        }
+        
+        .db1-theme .record-title { border-left: 3px solid var(--db1-blue); color: var(--db1-blue); }
+        .db2-theme .record-title { border-left: 3px solid var(--db2-green); color: var(--db2-green); }
+        .imei-theme .record-title { border-left: 3px solid var(--imei-purple); color: var(--imei-purple); }
+        .vehicle-theme .record-title { border-left: 3px solid var(--vehicle-amber); color: var(--vehicle-amber); }
+        .recursive-theme .record-title { border-left: 3px solid var(--orange-link); color: var(--orange-link); }
+        .family-theme .record-title { border-left: 3px solid var(--family-pink); color: var(--family-pink); }
+        .master-manifest-theme .record-title { border-left: 3px solid var(--manifest-gold); color: var(--manifest-gold); }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+            font-size: 14px;
+            border-bottom: 1px solid #111827;
+            padding-bottom: 6px;
+        }
+
+        .result-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
+        .telecom-meta-block {
+            background-color: #090f1c;
+            border: 1px solid #1e293b;
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin-top: 12px;
+        }
+
+        .meta-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            padding: 5px 0;
+            border-bottom: 1px dashed #030712;
+        }
+
+        .meta-row:last-child { border-bottom: none; }
+        .meta-label { color: var(--text-muted); }
+        .meta-val { color: #ffffff; font-weight: bold; text-align: right; word-break: break-all; }
+
+        .family-tree-block {
+            padding: 5px 10px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #ffffff;
+            white-space: pre-wrap;
+        }
+
+        .manifest-list-block {
+            padding: 5px 10px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .manifest-category {
+            color: var(--manifest-gold);
+            font-weight: bold;
+            margin-top: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 11px;
+            border-bottom: 1px solid #1e293b;
+            padding-bottom: 3px;
+        }
+        .manifest-line-entry {
+            color: #ffffff;
+            padding: 3px 0 3px 12px;
+            border-bottom: 1px solid #0f172a;
+            word-break: break-all;
+        }
+        .manifest-line-entry:last-child { border-bottom: none; }
+
+        .label-with-icon {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .label-with-icon svg {
+            width: 16px;
+            height: 16px;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .db1-theme .label-with-icon svg { stroke: var(--db1-blue); }
+        .db2-theme .label-with-icon svg { stroke: var(--db2-green); }
+        .imei-theme .label-with-icon svg { stroke: var(--imei-purple); }
+        .vehicle-theme .label-with-icon svg { stroke: var(--vehicle-amber); }
+        .recursive-theme .label-with-icon svg { stroke: var(--orange-link); }
+
+        .result-item span.res-value {
+            color: #ffffff;
+            font-weight: bold;
+            text-align: right;
+            word-break: break-word;
+            padding-left: 15px;
+        }
+
+        .res-value a.status-link {
+            text-decoration: none;
+            font-weight: bold;
+            color: var(--db2-green);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            background: rgba(16, 185, 129, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            transition: all 0.2s ease;
+            display: inline-block;
+        }
+
+        .recursive-theme .res-value a.status-link {
+            color: var(--orange-link);
+            border: 1px solid rgba(249, 115, 22, 0.3);
+            background: rgba(249, 115, 22, 0.1);
+        }
+
+        .res-value a.status-link:hover {
+            background: var(--db2-green);
+            color: #000000;
+            box-shadow: 0 0 8px var(--db2-green);
+        }
+
+        .recursive-theme .res-value a.status-link:hover {
+            background: var(--orange-link);
+            color: #000000;
+            box-shadow: 0 0 8px var(--orange-link);
+        }
+
+        .inner-error {
+            font-size: 13px;
+            text-align: center;
+            padding: 10px;
+            color: var(--text-muted);
+        }
+
+        .error-box {
+            margin-top: 20px;
+            padding: 14px;
+            border-radius: 8px;
+            background: rgba(244, 63, 94, 0.1);
+            color: var(--error-red);
+            border: 1px solid rgba(244, 63, 94, 0.3);
+            display: none;
+            font-size: 14px;
+            text-align: center;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            line-height: 1.5;
+        }
+
+        /* 📋 PRINT DISCLAIMER STYLES */
+        .print-disclaimer-wrapper {
+            display: none; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            margin-bottom: 25px;
+        }
+        .disclaimer-amber-box {
+            border: 1px solid #fde047;
+            background-color: #fefce8;
+            border-radius: 8px;
+            padding: 15px;
+            color: #1e293b;
+            font-size: 12px;
+            line-height: 1.6;
+            text-align: justify;
+        }
+        .disclaimer-red-box {
+            border: 1px solid #fca5a5;
+            background-color: #fef2f2;
+            border-radius: 8px;
+            padding: 15px;
+            color: #991b1b;
+            font-size: 12px;
+            line-height: 1.6;
+            margin-top: 15px;
+            text-align: justify;
+        }
+
+        /* 🖨️ NATIVE ENGINE LAYOUT OVERRIDES */
+        @media print {
+            html, body {
+                height: auto !important;
+                min-height: 0 !important; 
+                background: #ffffff !important; 
+                color: #000000 !important; 
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+            .container { 
+                background: #ffffff !important; 
+                box-shadow: none !important; 
+                border: none !important;
+                padding: 0 !important; 
+                max-width: 100% !important;
+                display: block !important;
+            }
+            h1 { 
+                color: #000000 !important; 
+                border-bottom: 2px solid #000000 !important;
+                margin-bottom: 25px !important;
+                text-shadow: none !important;
+            }
+            .print-disclaimer-wrapper {
+                display: block !important; 
+            }
+            .server-section { 
+                background: #ffffff !important; 
+                border: 1px solid #cbd5e1 !important; 
+                padding: 15px !important; 
+                margin-bottom: 20px !important;
+                page-break-inside: avoid !important;
+            }
+            .record-card { 
+                background: #ffffff !important; 
+                border: 1px solid #e2e8f0 !important; 
+                color: #000000 !important;
+                page-break-inside: avoid !important;
+            }
+            .res-value, .meta-val, .manifest-line-entry, .family-tree-block { 
+                color: #000000 !important; 
+            }
+            .telecom-meta-block { 
+                background: #f8fafc !important; 
+                border: 1px solid #cbd5e1 !important;
+            }
+            .manifest-category {
+                color: #1e3a8a !important;
+                border-bottom: 1px solid #cbd5e1 !important;
+            }
+            .manifest-line-entry { border-bottom: 1px solid #f1f5f9 !important; }
+            .search-mode-toggle, .input-group, .input-row-split, .search-actions-grid, .action-toolbar, .loading, #timeDb1, #timeDb2, #timeImei, #timeVehicle, .action-trigger-btn { 
+                display: none !important; 
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container" id="mainContainer">
+    <h1>STF SOG14 OSINT</h1>
+    
+    <div class="search-mode-toggle">
+        <button class="toggle-btn active" data-mode="phone" onclick="switchMode('phone')">Target Matrix</button>
+        <button class="toggle-btn" data-mode="vehicle" onclick="switchMode('vehicle')">Vehicle Search</button>
+        <button class="toggle-btn" data-mode="imei" onclick="switchMode('imei')">IMEI Search</button>
+    </div>
+    
+    <div class="input-group" id="singleInputContainer">
+        <input type="text" id="targetInput" placeholder="Enter Mobile / Doc No" onkeydown="handleKeyPress(event)">
+    </div>
+
+    <div class="input-row-split" id="splitInputContainer" style="display:none;">
+        <input type="text" id="nameInput" placeholder="Enter Name">
+        <input type="text" id="fatherInput" placeholder="Enter Father Name" onkeydown="handleKeyPress(event)">
+    </div>
+
+    <div class="search-actions-grid" id="searchActionGrid">
+        <button class="exec-btn" onclick="triggerSearch('phone')">Search Phone</button>
+        <button class="exec-btn" onclick="triggerSearch('doc')">Search Doc</button>
+        <button class="exec-btn" onclick="triggerSearch('name')">Name + Father</button>
+    </div>
+
+    <button class="action-trigger-btn" id="singularSubmitBtn" style="display:none;" onclick="executeUnifiedSearch()">Execute Query</button>
+
+    <div class="action-toolbar" id="exportToolbar" style="display:none;">
+        <button class="tool-btn" onclick="downloadTextReport()">Save TXT</button>
+        <button class="tool-btn" onclick="downloadPdfReport()">Save PDF</button>
+    </div>
+
+    <div id="loadingText" class="loading">> PINNING TELEMETRY MATRICES... FETCHING LIVE STREAMS...</div>
+    <div id="errorBox" class="error-box"></div>
+
+    <div id="resultBox" class="result-box">
+        
+        <div class="print-disclaimer-wrapper">
+            <div class="disclaimer-amber-box">
+                <strong>CONFIDENTIAL / DISCLAIMER :</strong> For authorized law enforcement officers only.<br><br>
+                SOG14 OSINT Report (LEO Use Only): This report is intended solely for authorized Indian law-enforcement officers for legitimate investigative purposes. By requesting/using this report, you self-attest that you are an authorized officer and that you have either the data subject's explicit consent OR a lawful basis/authorization under applicable law/agency policy. Do NOT forward/share to WhatsApp groups, Telegram, social media, personal email, or consumer cloud drives; share/store only within official government systems/accounts with appropriate access controls. Information is compiled from public/legal sources and legally verified tools; SOG14 does not provide, access, or use leaked/breached datasets (e.g., SDR, Aadhar/Aadhaar, ICMR), even with consent; any "appears in known public breach lists / account exist" flag is only an exposure indicator obtained via lawful breach-notification services, and leaked credentials/datasets are neither accessed nor stored. SOG14 maintains no proprietary datasets; information is retrieved in real time from licensed third-party APIs and public sources in response to authorized officer requests; SOG14 acts solely as an intermediary to fetch/format such data and does not audit or control those external sources. OSINT findings are indicative and must be independently verified through official channels before any legal action or court use. SOG14 does not retain report contents after delivery; for abuse-prevention and audit, minimal metadata (requesting phone number, timestamp, query type, transaction ID) may be retained for up to 90 days, encrypted at rest, and auto-deleted thereafter; no FIR/case number or chain-of-custody details are collected in chat. SOG14 acts solely as an intermediary and provides no legal advice; no warranties (express or implied) are made regarding accuracy, completeness, or fitness for purpose; the requesting agency is responsible for lawful and proportionate use in line with applicable law and internal policy.
+            </div>
+            <div class="disclaimer-red-box">
+                <strong>Important Note:</strong> SOG14 does not provide, access, or use leaked or breached data, such as SDR, Aadhar/Aadhaar, or ICMR data. Such activity is illegal under the Information Technology Act, 2000—even with user consent—and may also attract offences under the Bharatiya Nyaya Sanhita (BNS). Unlike some Telegram bots and spammers that share such data under the guise of OSINT, we strictly use legal sources (e.g., public records, trusted APIs). We do not encourage or support the access or use of illegal data under any circumstances.
+            </div>
+        </div>
+
+        <div id="phoneResultsGroup">
+            <div class="server-section db1-theme">
+                <div class="server-header">
+                    <span>[CORE_A] DB-1: TRUE CALL MATRIX</span>
+                    <span id="timeDb1" style="color: var(--text-muted);">--</span>
+                </div>
+                <div id="db1Wrapper" class="records-container"></div>
+            </div>
+
+            <div class="server-section db2-theme">
+                <div class="server-header">
+                    <span>[CORE_B] DB-2: SHERLOCK ENGINE</span>
+                    <span id="timeDb2" style="color: var(--text-muted);">--</span>
+                </div>
+                <div id="db2Wrapper" class="records-container"></div>
+            </div>
+            
+            <div class="server-section recursive-theme" id="recursiveSection" style="display:none;">
+                <div class="server-header">
+                    <span>[CORE_LINK] // ASSOCIATED TARGET LINKAGE REPORTS</span>
+                    <span id="recursiveCount" style="color: var(--text-muted);">0 Linked Matches</span>
+                </div>
+                <div id="recursiveWrapper" class="records-container"></div>
+            </div>
+        </div>
+
+        <div id="vehicleResultsGroup" style="display:none;">
+            <div class="server-section vehicle-theme">
+                <div class="server-header">
+                    <span>[CORE_D] DB-4: VEHICLE VEHICLE MATRICES</span>
+                    <span id="timeVehicle" style="color: var(--text-muted);">--</span>
+                </div>
+                <div id="vehicleWrapper" class="records-container"></div>
+            </div>
+        </div>
+
+        <div id="imeiResultsGroup" style="display:none;">
+            <div class="server-section imei-theme">
+                <div class="server-header">
+                    <span>[CORE_C] DB-3: HICELLTEK TAC MATRIX</span>
+                    <span id="timeImei" style="color: var(--text-muted);">--</span>
+                </div>
+                <div id="imeiWrapper" class="records-container"></div>
+            </div>
+        </div>
+
+        <div class="server-section family-theme" id="familyTreeSection" style="display:none;">
+            <div class="server-header">
+                <span>[CORE_FAMILY] // INTELLIGENCE KINSHIP RELATIONSHIP MAPPER</span>
+                <span style="color: var(--text-muted);">Algorithmic Link Topology</span>
+            </div>
+            <div class="record-card">
+                <div class="record-title">[PARENTAL_LINEAGE_ANCESTRY_TREE]</div>
+                <div class="family-tree-block" id="familyTreeContainer"></div>
+            </div>
+        </div>
+
+        <div class="server-section master-manifest-theme" id="masterManifestSection" style="display:none;">
+            <div class="server-header">
+                <span>[CORE_MANIFEST] // MASTER TARGET LOG AGGREGATION INDEX</span>
+                <span style="color: var(--text-muted);">Deduplicated Line-by-Line Blueprint</span>
+            </div>
+            <div class="record-card">
+                <div class="record-title">[CONSOLIDATED_OSINT_BLUEPRINT]</div>
+                <div class="manifest-list-block" id="masterManifestContainer"></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+let currentMode = 'phone';
+let activePhoneSearchSubMode = 'phone'; 
+const HICELLTEK_API_TOKEN = 'WRITE_YOUR_HICELLTEK_API_TOKEN_HERE';
+
+// Hardcoded verified active registration key mapping string
+const SCRAPER_API_KEY = '2165047d8e686d530cdf1cb68f2a1f9a';
+
+// Tracking maps sets allocations configurations variables
+let compiledNumbers = new Set();
+let compiledNames = new Set();
+let compiledSherlockNames = new Set();
+let compiledEmails = new Set();
+let compiledDocs = new Set();
+let compiledAddresses = new Set();
+
+// Raw profile cache repository array to process link clustering metrics
+let queryCapturedRecords = [];
+
+function switchMode(mode) {
+    currentMode = mode;
+    const singleContainer = document.getElementById('singleInputContainer');
+    const splitContainer = document.getElementById('splitInputContainer');
+    const actionGrid = document.getElementById('searchActionGrid');
+    const singularBtn = document.getElementById('singularSubmitBtn');
+    const buttons = document.querySelectorAll('.toggle-btn');
+    
+    buttons.forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`.toggle-btn[data-mode="${mode}"]`).classList.add('active');
+    
+    document.body.classList.remove('imei-active', 'vehicle-active');
+    
+    if(mode === 'phone') {
+        actionGrid.style.display = 'grid';
+        singularBtn.style.display = 'none';
+        if(activePhoneSearchSubMode === 'name') {
+            singleContainer.style.display = 'none';
+            splitContainer.style.display = 'flex';
+        } else {
+            singleContainer.style.display = 'block';
+            splitContainer.style.display = 'none';
+            document.getElementById('targetInput').placeholder = "Enter Mobile / Doc No";
+        }
+    } else if (mode === 'vehicle') {
+        document.body.classList.add('vehicle-active');
+        actionGrid.style.display = 'none';
+        splitContainer.style.display = 'none';
+        singleContainer.style.display = 'block';
+        singularBtn.style.display = 'block';
+        document.getElementById('targetInput').placeholder = "Enter Vehicle RC Request ID Tracking Token";
+    } else {
+        document.body.classList.add('imei-active');
+        actionGrid.style.display = 'none';
+        splitContainer.style.display = 'none';
+        singleContainer.style.display = 'block';
+        singularBtn.style.display = 'block';
+        document.getElementById('targetInput').placeholder = "Enter 15-digit IMEI terminal ID";
+    }
+}
+
+function handleKeyPress(event) {
+    if (event.key === "Enter") {
+        executeUnifiedSearch();
+    }
+}
+
+function executeUnifiedSearch() {
+    if (currentMode === 'phone') performPhoneLookup(activePhoneSearchSubMode);
+    else if (currentMode === 'vehicle') performVehicleLookup();
+    else performImeiLookup();
+}
+
+function triggerSearch(subMode) {
+    activePhoneSearchSubMode = subMode;
+    const singleContainer = document.getElementById('singleInputContainer');
+    const splitContainer = document.getElementById('splitInputContainer');
+    const mainInput = document.getElementById('targetInput');
+
+    if(subMode === 'name') {
+        singleContainer.style.display = 'none';
+        splitContainer.style.display = 'flex';
+        
+        let nVal = document.getElementById('nameInput').value.trim();
+        let fVal = document.getElementById('fatherInput').value.trim();
+        if(nVal && fVal) {
+            performPhoneLookup('name');
+        }
+    } else {
+        splitContainer.style.display = 'none';
+        singleContainer.style.display = 'block';
+        if(subMode === 'phone') mainInput.placeholder = "Enter 10-digit mobile number";
+        if(subMode === 'doc') mainInput.placeholder = "Enter Document identifier code";
+        
+        if(mainInput.value.trim()) performPhoneLookup(subMode);
+    }
+}
+
+function cleanTo10Digits(inputStr) {
+    if (!inputStr) return null;
+    let digits = inputStr.replace(/\D/g, '');
+    if (digits.length === 12 && digits.startsWith('91')) digits = digits.substring(2);
+    else if (digits.length === 11 && digits.startsWith('0')) digits = digits.substring(1);
+    return digits.length === 10 ? digits : null;
+}
+
+// ALGORITHMIC CLUSTER ENGINE: Normalizes strings phonetically and generates a clean, deduplicated linkage tree map
 function processKinshipTopologyTree() {
     const treeSection = document.getElementById('familyTreeSection');
     const treeContainer = document.getElementById('familyTreeContainer');
@@ -13,19 +804,19 @@ function processKinshipTopologyTree() {
     let uniqueProfiles = [];
     let seenProfileKeys = new Set();
 
-    // Helper to extract a highly standardized phonetic/canonical base key
+    // Helper function to generate standardized, clean comparison blocks across records
     function getCanonicalKey(str) {
         if (!str || str === 'N/A') return '';
         return str.toUpperCase()
-                  .replace(/S\/O\s+/g, '') // Cleans out father prefix notations cleanly
+                  .replace(/S\/O\s+/g, '') // Strips away parental prefix strings seamlessly
                   .replace(/D\/O\s+/g, '')
-                  .replace(/W/O\s+/g, '')
-                  .replace(/[^A-Z0-9]/g, '') // Strips commas, periods, spaces, and punctuation blocks
-                  .replace(/KAMATA/g, 'KAMTA') // Explicit phonological consolidation mapping edge-case fix
+                  .replace(/W\/O\s+/g, '')
+                  .replace(/[^A-Z0-9]/g, '') // Cleans spaces and punctuation symbols completely
+                  .replace(/KAMATA/g, 'KAMTA') // Explicit phonological string harmonization bridge mapping
                   .trim();
     }
 
-    // Deduplicate incoming raw data loops securely
+    // Deduplicate profiles based on clean fields properties
     queryCapturedRecords.forEach(rec => {
         let nameClean = (rec.name || '').trim().replace(/\s+/g, ' ');
         let fatherClean = (rec.father_name || '').trim().replace(/\s+/g, ' ');
@@ -42,7 +833,7 @@ function processKinshipTopologyTree() {
         }
     });
 
-    // Cluster matching elements across entities securely
+    // Map parent nodes and geographic fields arrays systematically
     uniqueProfiles.forEach(p => {
         let rawFatherKey = getCanonicalKey(p.father_name);
         let rawAddrKey = getCanonicalKey(p.address);
@@ -54,14 +845,13 @@ function processKinshipTopologyTree() {
                     members: []
                 };
             }
-            // Enforces that we only store a single individual once per parent index group cluster block
+            // CRITICAL UPGRADE FIX: Enforces a name boundary verification to prevent matching an entry against itself
             if (!fatherGroups[rawFatherKey].members.some(m => m.name.toUpperCase() === p.name.toUpperCase())) {
                 fatherGroups[rawFatherKey].members.push(p);
             }
         }
 
         if (rawAddrKey && rawAddrKey.length > 10) {
-            // Isolate a stable geographic threshold chunk string (20 anchor vectors)
             let baseGeographicToken = rawAddrKey.substring(0, 20);
             if (!addressGroups[baseGeographicToken]) {
                 addressGroups[baseGeographicToken] = {
@@ -77,7 +867,7 @@ function processKinshipTopologyTree() {
 
     let outputText = "";
 
-    // Render Section A: Multi-Individual Sibling Branches Manifest
+    // Generate Section 1: Validated multi-individual siblings nodes
     let siblingSectionsFound = false;
     for (let fKey in fatherGroups) {
         let group = fatherGroups[fKey];
@@ -95,7 +885,7 @@ function processKinshipTopologyTree() {
         }
     }
 
-    // Render Section B: Co-Located Residency Cells Manifest
+    // Generate Section 2: Validated co-located domestic cluster cells
     let locationSectionsFound = false;
     for (let aKey in addressGroups) {
         let group = addressGroups[aKey];
@@ -123,3 +913,528 @@ function processKinshipTopologyTree() {
     treeSection.style.display = 'block';
     treeContainer.innerText = outputText;
 }
+
+function updateMasterManifestUI() {
+    const section = document.getElementById('masterManifestSection');
+    const container = document.getElementById('masterManifestContainer');
+    container.innerHTML = '';
+
+    const hasData = compiledNumbers.size || compiledNames.size || compiledSherlockNames.size || compiledEmails.size || compiledDocs.size || compiledAddresses.size;
+    if (!hasData) {
+        section.style.display = 'none';
+        return;
+    }
+
+    section.style.display = 'block';
+
+    const categories = [
+        { label: 'All Tracked Numbers', set: compiledNumbers },
+        { label: 'All Profile Names Extracted', set: compiledNames },
+        { label: 'All Sherlock Network Signatures', set: compiledSherlockNames },
+        { label: 'All Digital Emails Tracked', set: compiledEmails },
+        { label: 'All Identity Documents Logged', set: compiledDocs },
+        { label: 'All Addresses Pinpointed', set: compiledAddresses }
+    ];
+
+    categories.forEach(cat => {
+        if (cat.set.size > 0) {
+            const catHeader = document.createElement('div');
+            catHeader.className = 'manifest-category';
+            catHeader.innerText = cat.label;
+            container.appendChild(catHeader);
+            
+            cat.set.forEach(value => {
+                const entry = document.createElement('div');
+                entry.className = 'manifest-line-entry';
+                entry.innerText = `> ${value}`;
+                container.appendChild(entry);
+            });
+        }
+    });
+}
+
+async function performPhoneLookup(searchType) {
+    const loadingText = document.getElementById('loadingText');
+    const resultBox = document.getElementById('resultBox');
+    const errorBox = document.getElementById('errorBox');
+    const exportToolbar = document.getElementById('exportToolbar');
+    
+    document.getElementById('phoneResultsGroup').style.display = 'block';
+    document.getElementById('imeiResultsGroup').style.display = 'none';
+    document.getElementById('vehicleResultsGroup').style.display = 'none';
+    document.getElementById('recursiveSection').style.display = 'none';
+    document.getElementById('masterManifestSection').style.display = 'none';
+    document.getElementById('familyTreeSection').style.display = 'none';
+    
+    const db1Wrapper = document.getElementById('db1Wrapper');
+    const db2Wrapper = document.getElementById('db2Wrapper');
+    const recursiveWrapper = document.getElementById('recursiveWrapper');
+
+    resultBox.style.display = 'none';
+    errorBox.style.display = 'none';
+    exportToolbar.style.display = 'none';
+    db1Wrapper.innerHTML = ''; 
+    db2Wrapper.innerHTML = '';
+    recursiveWrapper.innerHTML = '';
+
+    compiledNumbers.clear(); compiledNames.clear(); compiledSherlockNames.clear();
+    compiledEmails.clear(); compiledDocs.clear(); compiledAddresses.clear();
+    
+    queryCapturedRecords = [];
+
+    loadingText.style.display = 'block';
+    loadingText.innerText = "> INITIALIZING CYBER DEFENSE INTEL CONSOLE POOL...";
+
+    let processedNumbers = new Set();
+    let discoveryQueue = [];
+    let queryValue = "";
+    let mainNumber = null;
+
+    if (searchType === 'phone') {
+        let inputVal = document.getElementById('targetInput').value.trim();
+        mainNumber = cleanTo10Digits(inputVal);
+        if (!mainNumber) {
+            loadingText.style.display = 'none';
+            errorBox.innerText = `CRITICAL CONFIG FAULT:\nInput must resolve to exactly 10 digits.`;
+            errorBox.style.display = 'block';
+            return;
+        }
+        processedNumbers.add(mainNumber);
+        queryValue = mainNumber;
+        compiledNumbers.add(mainNumber);
+    } else {
+        queryValue = document.getElementById('targetInput').value.trim();
+        if(searchType === 'name') {
+            let nameVal = document.getElementById('nameInput').value.trim();
+            let fatherVal = document.getElementById('fatherInput').value.trim();
+            queryValue = `${fatherVal} ${nameVal}`;
+        }
+    }
+
+    const targetApiUrl = `https://true-call-check.vercel.app/api/truecallcheckApi?newKey=${encodeURIComponent(queryValue)}&IndNum=${encodeURIComponent(queryValue)}`;
+    const proxyTunnelUrl = `https://api.scraperapi.com/?api_key=${SCRAPER_API_KEY}&url=${encodeURIComponent(targetApiUrl)}`;
+
+    try {
+        const startDb1 = performance.now();
+        const responseDb1 = await fetch(proxyTunnelUrl);
+        if (!responseDb1.ok) throw new Error(`Status ${responseDb1.status}`);
+        const rawResponse = await responseDb1.json();
+        document.getElementById('timeDb1').innerText = `[${(performance.now() - startDb1).toFixed(0)}ms]`;
+
+        if (rawResponse && rawResponse.data && rawResponse.data[0] && rawResponse.data[0].howmuchyouneedtowait) {
+            loadingText.style.display = 'none';
+            let waitSeconds = parseInt(rawResponse.data[0].howmuchyouneedtowait) || 35;
+            errorBox.style.display = 'block';
+            errorBox.innerHTML = `== TERMINAL SECURITY RATE-LIMIT INTERCEPT ==<br>SECURITY OVERHEAT PROTECTION ACTIVE.<br>YOU MUST WAIT <span id="countdownTimer" style="color:var(--error-red); font-size:16px;">${waitSeconds}</span> SECONDS BEFORE RUNNING THE NEXT SEARCH.`;
+            let interval = setInterval(() => {
+                waitSeconds--;
+                document.getElementById('countdownTimer').innerText = waitSeconds;
+                if (waitSeconds <= 0) {
+                    clearInterval(interval);
+                    errorBox.style.display = 'none';
+                }
+            }, 1000);
+            return; 
+        }
+
+        if (rawResponse && rawResponse.data && Array.isArray(rawResponse.data) && rawResponse.data.length > 0) {
+            exportToolbar.style.display = 'flex'; 
+            resultBox.style.display = 'block';
+            rawResponse.data.forEach((record, index) => {
+                if(!record) return;
+                
+                queryCapturedRecords.push(record);
+
+                const card = document.createElement('div');
+                card.className = 'record-card';
+                let operatorName = 'N/A', circleName = 'N/A';
+                
+                if (record.circle && typeof record.circle === 'string') {
+                    if (record.circle.includes(';')) {
+                        const parts = record.circle.split(';');
+                        operatorName = parts[0] || 'N/A'; circleName = parts[1] || 'N/A';
+                    } else { circleName = record.circle; }
+                }
+
+                if(record.mobile) {
+                    let mClean = cleanTo10Digits(String(record.mobile));
+                    if(mClean) {
+                        compiledNumbers.add(mClean);
+                        if(!processedNumbers.has(mClean)) { discoveryQueue.push(mClean); processedNumbers.add(mClean); }
+                    }
+                }
+
+                ['alt_mobile', 'alt_mobile2', 'alt_mobile3', 'alt_mobile4'].forEach(k => {
+                    if(record[k]) {
+                        let cleaned = cleanTo10Digits(String(record[k]));
+                        if(cleaned) {
+                            compiledNumbers.add(cleaned);
+                            if(!processedNumbers.has(cleaned)) { discoveryQueue.push(cleaned); processedNumbers.add(cleaned); }
+                        }
+                    }
+                });
+
+                if(record.name) compiledNames.add(record.name);
+                if(record.email && record.email !== 'N/A') compiledEmails.add(record.email);
+                if(record.DocumentNumber && record.DocumentNumber !== 'N/A') compiledDocs.add(record.DocumentNumber);
+                if(record.address && record.address !== 'N/A') compiledAddresses.add(record.address);
+
+                card.innerHTML = `
+                    <div class="record-title">[PROFILE_ENTRY_0${index + 1}]</div>
+                    <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg><strong>Full Name:</strong></div><span class="res-value">${record.name || 'NOT_DECLARED'}</span></div>
+                    <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path></svg><strong>Father Name:</strong></div><span class="res-value">${record.father_name || 'N/A'}</span></div>
+                    <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect></svg><strong>Mobile:</strong></div><span class="res-value">${record.mobile || 'N/A'}</span></div>
+                    <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"></path></svg><strong>Address:</strong></div><span class="res-value">${record.address || 'N/A'}</span></div>
+                    <div class="telecom-meta-block">
+                        <div class="meta-row"><span class="meta-label">Operator:</span><span class="meta-val">${operatorName}</span></div>
+                        <div class="meta-row"><span class="meta-label">Circle:</span><span class="meta-val">${circleName}</span></div>
+                        <div class="meta-row"><span class="meta-label">Document No:</span><span class="meta-val">${record.DocumentNumber || 'N/A'}</span></div>
+                        <div class="meta-row"><span class="meta-label">Email:</span><span class="meta-val">${record.email || 'N/A'}</span></div>
+                        <div class="meta-row"><span class="meta-label">Alt Num 1:</span><span class="meta-val">${record.alt_mobile || 'N/A'}</span></div>
+                        <div class="meta-row"><span class="meta-label">Alt Num 2:</span><span class="meta-val">${record.alt_mobile2 || 'N/A'}</span></div>
+                        <div class="meta-row"><span class="meta-label">Alt Num 3:</span><span class="meta-val">${record.alt_mobile3 || 'N/A'}</span></div>
+                        <div class="meta-row"><span class="meta-label">Alt Num 4:</span><span class="meta-val">${record.alt_mobile4 || 'N/A'}</span></div>
+                    </div>
+                `;
+                db1Wrapper.appendChild(card);
+            });
+        } else {
+            db1Wrapper.innerHTML = `<div class="inner-error">> Notice: No records resolved inside database indexes.</div>`;
+            resultBox.style.display = 'block';
+        }
+    } catch(err) {
+        db1Wrapper.innerHTML = `<div class="inner-error" style="color:var(--error-red);">CORE_A MATRIX INTERCEPT FAULT</div>`;
+        resultBox.style.display = 'block';
+    }
+
+    // Parse DB-2 Response
+    if (mainNumber) {
+        try {
+            const startDb2 = performance.now();
+            const responseDb2 = await fetch(`https://api-developers-sherlock-osint.sherlock-dev.workers.dev/api/number`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0' },
+                body: JSON.stringify({ number: '+91' + mainNumber })
+            });
+            document.getElementById('timeDb2').innerText = `[${(performance.now() - startDb2).toFixed(0)}ms]`;
+
+            if (responseDb2.ok) {
+                const r2 = await responseDb2.json();
+                if (r2 && r2.success && r2.data) {
+                    exportToolbar.style.display = 'flex';
+                    resultBox.style.display = 'block';
+                    const d = r2.data; const social = d.social || {};
+                    const whatsappField = social.whatsapp ? `<a href="https://wa.me/91${mainNumber}" target="_blank" class="status-link">ACTIVE</a>` : `<span style="color:var(--error-red);">INACTIVE</span>`;
+                    const telegramField = social.telegram ? `<a href="https://t.me/+91${mainNumber}" target="_blank" class="status-link">ACTIVE</a>` : `<span style="color:var(--error-red);">INACTIVE</span>`;
+
+                    if(d.name) compiledSherlockNames.add(d.name);
+                    if(d.location && d.location !== 'N/A') compiledAddresses.add(d.location);
+
+                    const card = document.createElement('div');
+                    card.className = 'record-card';
+                    card.innerHTML = `
+                        <div class="record-title">[OSINT_INDEX_SIGNATURE]</div>
+                        <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path></svg><strong>ID Name:</strong></div><span class="res-value">${d.name || 'UNKNOWN'}</span></div>
+                        <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"></path></svg><strong>Location:</strong></div><span class="res-value">${d.location || 'N/A'}</span></div>
+                        <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M2 22h20M2 17h20"></path></svg><strong>Carrier:</strong></div><span class="res-value">${d.carrier || 'N/A'}</span></div>
+                        <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg><strong>WhatsApp:</strong></div><span class="res-value">${whatsappField}</span></div>
+                        <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line></svg><strong>Telegram:</strong></div><span class="res-value">${telegramField}</span></div>
+                    `;
+                    db2Wrapper.appendChild(card);
+                } else { db2Wrapper.innerHTML = '<div class="inner-error">> No matching signatures logged in Sherlock cluster.</div>'; }
+            } else { db2Wrapper.innerHTML = '<div class="inner-error">CORE_B SERVICE RESPONSE FAULT</div>'; }
+        } catch(err) {
+            db2Wrapper.innerHTML = '<div class="inner-error">CORE_B NETWORK TRACE ERROR</div>';
+        }
+    } else {
+        db2Wrapper.innerHTML = `<div class="inner-error">> Sherlock core bypassed.</div>`;
+    }
+
+    // --- RECURSIVE LINKAGE SCANNERS ---
+    if(discoveryQueue.length > 0) {
+        document.getElementById('recursiveSection').style.display = 'block';
+        resultBox.style.display = 'block';
+        
+        while(discoveryQueue.length > 0) {
+            let altNum = discoveryQueue.shift();
+            document.getElementById('recursiveCount').innerText = `RETRIEVING NODE PROFILE: ${altNum}...`;
+
+            try {
+                const recursiveUrlDb1 = `https://true-call-check.vercel.app/api/truecallcheckApi?newKey=${altNum}&IndNum=${altNum}`;
+                const proxyRecDb1Url = `https://api.scraperapi.com/?api_key=${SCRAPER_API_KEY}&url=${encodeURIComponent(recursiveUrlDb1)}`;
+                const recursiveUrlDb2 = `https://api-developers-sherlock-osint.sherlock-dev.workers.dev/api/number`;
+
+                const responseRecDb1 = await fetch(proxyRecDb1Url).then(r => r.ok ? r.json() : null).catch(() => null);
+                if (responseRecDb1 && responseRecDb1.data && responseRecDb1.data[0] && responseRecDb1.data[0].howmuchyouneedtowait) {
+                    continue; 
+                }
+
+                const responseRecDb2 = await fetch(recursiveUrlDb2, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0' },
+                    body: JSON.stringify({ number: '+91' + altNum })
+                }).then(r => r.ok ? r.json() : null).catch(() => null);
+
+                if ((responseRecDb1 && responseRecDb1.data && responseRecDb1.data.length > 0) || (responseRecDb2 && responseRecDb2.success && responseRecDb2.data)) {
+                    if(responseRecDb1 && responseRecDb1.data && responseRecDb1.data.length > 0) {
+                        responseRecDb1.data.forEach(subRecord => {
+                            if(!subRecord) return;
+                            
+                            queryCapturedRecords.push(subRecord);
+
+                            if(subRecord.mobile) {
+                                let cleanMob = cleanTo10Digits(subRecord.mobile);
+                                if(cleanMob) {
+                                    compiledNumbers.add(cleanMob);
+                                    if(!processedNumbers.has(cleanMob)) { discoveryQueue.push(cleanMob); processedNumbers.add(cleanMob); }
+                                }
+                            }
+                            ['alt_mobile', 'alt_mobile2', 'alt_mobile3', 'alt_mobile4'].forEach(k => {
+                                if(subRecord[k]) {
+                                    let cleanAlt = cleanTo10Digits(String(subRecord[k]));
+                                    if(cleanAlt) {
+                                        compiledNumbers.add(cleanAlt);
+                                        if(!processedNumbers.has(cleanAlt)) { discoveryQueue.push(cleanAlt); processedNumbers.add(cleanAlt); }
+                                    }
+                                }
+                            });
+
+                            if(subRecord.name) compiledNames.add(subRecord.name);
+                            if(subRecord.email && subRecord.email !== 'N/A') compiledEmails.add(subRecord.email);
+                            if(subRecord.DocumentNumber && subRecord.DocumentNumber !== 'N/A') compiledDocs.add(subRecord.DocumentNumber);
+                            if(subRecord.address && subRecord.address !== 'N/A') compiledAddresses.add(subRecord.address);
+                        });
+                    }
+
+                    if(responseRecDb2 && responseRecDb2.success && responseRecDb2.data) {
+                        if(responseRecDb2.data.name) compiledSherlockNames.add(responseRecDb2.data.name);
+                        if(responseRecDb2.data.location && responseRecDb2.data.location !== 'N/A') compiledAddresses.add(responseRecDb2.data.location);
+                    }
+
+                    const altCard = document.createElement('div');
+                    altCard.className = 'record-card';
+                    let baseHtml = `<div class="record-title">[LINKED_RELATION_REPORT: ${altNum}]</div>`;
+                    
+                    if(responseRecDb1 && responseRecDb1.data && responseRecDb1.data.length > 0) {
+                        const rec = responseRecDb1.data[0];
+                        let operatorName = 'N/A', circleName = 'N/A';
+                        if (rec?.circle && typeof rec.circle === 'string') {
+                            if (rec.circle.includes(';')) {
+                                const parts = rec.circle.split(';');
+                                operatorName = parts[0] || 'N/A'; circleName = parts[1] || 'N/A';
+                            } else { circleName = rec.circle; }
+                        }
+                        
+                        baseHtml += `
+                            <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg><strong>Full Name:</strong></div><span class="res-value" style="color:var(--orange-link);">${rec.name || 'NOT_DECLARED'}</span></div>
+                            <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path></svg><strong>Father Name:</strong></div><span class="res-value">${rec.father_name || 'N/A'}</span></div>
+                            <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"></path></svg><strong>Address:</strong></div><span class="res-value">${rec.address || 'N/A'}</span></div>
+                            <div class="telecom-meta-block">
+                                <div class="meta-row"><span class="meta-label">Operator:</span><span class="meta-val">${operatorName}</span></div>
+                                <div class="meta-row"><span class="meta-label">Circle:</span><span class="meta-val">${circleName}</span></div>
+                                <div class="meta-row"><span class="meta-label">Document No:</span><span class="meta-val">${rec.DocumentNumber || 'N/A'}</span></div>
+                                <div class="meta-row"><span class="meta-label">Email:</span><span class="meta-val">${rec.email || 'N/A'}</span></div>
+                                <div class="meta-row"><span class="meta-label">Alt Num 1:</span><span class="meta-val">${rec.alt_mobile || 'N/A'}</span></div>
+                                <div class="meta-row"><span class="meta-label">Alt Num 2:</span><span class="meta-val">${rec.alt_mobile2 || 'N/A'}</span></div>
+                                <div class="meta-row"><span class="meta-label">Alt Num 3:</span><span class="meta-val">${rec.alt_mobile3 || 'N/A'}</span></div>
+                                <div class="meta-row"><span class="meta-label">Alt Num 4:</span><span class="meta-val">${rec.alt_mobile4 || 'N/A'}</span></div>
+                            </div>
+                        `;
+                    } else {
+                        baseHtml += `<div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path></svg><strong>Full Name:</strong></div><span class="res-value" style="color:var(--text-muted);">NOT REGISTERED IN DB-1</span></div>`;
+                    }
+
+                    altCard.innerHTML = baseHtml;
+                    recursiveWrapper.appendChild(altCard);
+                }
+            } catch(e) {}
+        }
+        document.getElementById('recursiveCount').innerText = `${recursiveWrapper.children.length} Comprehensive Profile Reports Extracted`;
+    }
+    
+    loadingText.style.display = 'none';
+    
+    processKinshipTopologyTree();
+    updateMasterManifestUI();
+
+    if(db1Wrapper.children.length > 0 || db2Wrapper.children.length > 0) {
+        exportToolbar.style.display = 'flex';
+    }
+}
+
+async function performVehicleLookup() {
+    const inputVal = document.getElementById('targetInput').value.trim();
+    const loadingText = document.getElementById('loadingText');
+    const resultBox = document.getElementById('resultBox');
+    const errorBox = document.getElementById('errorBox');
+    const vehicleWrapper = document.getElementById('vehicleWrapper');
+    const exportToolbar = document.getElementById('exportToolbar');
+
+    document.getElementById('phoneResultsGroup').style.display = 'none';
+    document.getElementById('imeiResultsGroup').style.display = 'none';
+    document.getElementById('vehicleResultsGroup').style.display = 'block';
+    document.getElementById('masterManifestSection').style.display = 'none';
+    document.getElementById('familyTreeSection').style.display = 'none';
+    
+    resultBox.style.display = 'none'; errorBox.style.display = 'none'; exportToolbar.style.display = 'none'; vehicleWrapper.innerHTML = '';
+
+    if (!inputVal) {
+        errorBox.innerText = `CRITICAL CONFIG FAULT:\nTracking parameter Request ID identifier missing.`;
+        errorBox.style.display = 'block'; return;
+    }
+
+    loadingText.style.display = 'block';
+    loadingText.innerText = `> TUNNELING INTEGRATION INTERFACES... PARSING RC STATUS FROM RAPIDAPI GATEWAYS...`;
+    
+    const startTime = performance.now();
+    const targetUrl = `https://vehicle-rc-verification-advanced.p.rapidapi.com/v3/tasks?request_id=${encodeURIComponent(inputVal)}`;
+    const proxyTunnelUrl = `https://corsproxy.io/?url=${encodeURIComponent(targetUrl)}`;
+
+    try {
+        const response = await fetch(proxyTunnelUrl, {
+            method: 'GET',
+            headers: {
+                'x-rapidapi-host': 'vehicle-rc-verification-advanced.p.rapidapi.com',
+                'x-rapidapi-key': '5f2b24e02emsh645a917bb3f6b5bp1734bbjsn30ba61c92d78'
+            }
+        });
+        
+        loadingText.style.display = 'none';
+        if (!response.ok) throw new Error(`Server Status Code ${response.status}`);
+        
+        const resData = await response.json();
+        resultBox.style.display = 'block';
+        document.getElementById('timeVehicle').innerText = `[${(performance.now() - startTime).toFixed(0)}ms]`;
+
+        if (resData) {
+            exportToolbar.style.display = 'flex';
+            const card = document.createElement('div');
+            card.className = 'record-card';
+            
+            let statusInfo = resData.status || resData.task_status || 'PROCESSED';
+            let messageInfo = resData.message || resData.remark || 'Verification manifest synchronized successfully.';
+            let taskId = resData.id || resData.task_id || inputVal;
+
+            compiledDocs.add(`RC-TASK: ${taskId}`);
+            if(resData.account_id) compiledDocs.add(`ACCOUNT: ${resData.account_id}`);
+
+            card.innerHTML = `
+                <div class="record-title">[VEHICLE_REGISTRATION_VERIFICATION_MANIFEST]</div>
+                <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24" style="stroke:var(--vehicle-amber);"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg><strong>Tracking ID:</strong></div><span class="res-value">${taskId}</span></div>
+                <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24" style="stroke:var(--vehicle-amber);"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg><strong>Task Status:</strong></div><span class="res-value" style="color:var(--vehicle-amber);">${statusInfo.toUpperCase()}</span></div>
+                <div class="telecom-meta-block">
+                    <div class="meta-row"><span class="meta-label">Endpoint Gateway:</span><span class="meta-val">Advanced RC Matrix Engine</span></div>
+                    <div class="meta-row"><span class="meta-label">System Message:</span><span class="meta-val">${messageInfo}</span></div>
+                    <div class="meta-row"><span class="meta-label">Account Node ID:</span><span class="meta-val">${resData.account_id || 'N/A'}</span></div>
+                    <div class="meta-row"><span class="meta-label">Timestamp Hash:</span><span class="meta-val">${resData.created_at || new Date().toISOString()}</span></div>
+                </div>
+            `;
+            vehicleWrapper.appendChild(card);
+            updateMasterManifestUI();
+        } else {
+            vehicleWrapper.innerHTML = `<div class="inner-error">> No registration tracking nodes matches this Request ID footprint.</div>`;
+        }
+    } catch (error) {
+        loadingText.style.display = 'none';
+        errorBox.innerText = `VEHICLE GATEWAY RECOGNITION BLOCK INTERCEPT FAULT. Verify parameter strings.`;
+        errorBox.style.display = 'block';
+    }
+}
+
+async function performImeiLookup() {
+    let rawInput = document.getElementById('targetInput').value;
+    const loadingText = document.getElementById('loadingText');
+    const resultBox = document.getElementById('resultBox');
+    const errorBox = document.getElementById('errorBox');
+    const imeiWrapper = document.getElementById('imeiWrapper');
+    const exportToolbar = document.getElementById('exportToolbar');
+
+    document.getElementById('phoneResultsGroup').style.display = 'none';
+    document.getElementById('imeiResultsGroup').style.display = 'block';
+    document.getElementById('vehicleResultsGroup').style.display = 'none';
+    document.getElementById('masterManifestSection').style.display = 'none';
+    document.getElementById('familyTreeSection').style.display = 'none';
+    resultBox.style.display = 'none'; errorBox.style.display = 'none'; exportToolbar.style.display = 'none'; imeiWrapper.innerHTML = '';
+
+    let imeiDigits = rawInput.replace(/\D/g, '');
+    if (imeiDigits.length !== 15) {
+        errorBox.innerText = `CRITICAL CONFIG FAULT:\nInput must be a valid 15-digit IMEI structural ID.`;
+        errorBox.style.display = 'block'; return;
+    }
+
+    let tacCode = imeiDigits.substring(0, 8);
+    loadingText.style.display = 'block';
+    loadingText.innerText = `... SLICING TAC SIGNATURE [${tacCode}]... EXTRACTING FROM HICELLTEK MATRIX CORES...`;
+    
+    const startTime = performance.now();
+    const url = `https://imei.hicelltek.com/api/v1/tac/lookup?tac=${tacCode}`;
+
+    try {
+        const response = await fetch(url, { 
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${HICELLTEK_API_TOKEN}`, 'Accept': 'application/json' }
+        });
+        loadingText.style.display = 'none';
+        if (!response.ok) throw new Error();
+
+        const resData = await response.json();
+        resultBox.style.display = 'block';
+        document.getElementById('timeImei').innerText = `[${(performance.now() - startTime).toFixed(0)}ms]`;
+
+        if (resData && (resData.success || resData.status === "success" || resData.data)) {
+            exportToolbar.style.display = 'flex';
+            const obj = resData.data || resData.result || resData;
+            const card = document.createElement('div');
+            card.className = 'record-card';
+            card.innerHTML = `
+                <div class="record-title">[HARDWARE_TAC_SIGNATURE_MATCH]</div>
+                <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect></svg><strong>Brand / Make:</strong></div><span class="res-value">${obj.brand || 'UNKNOWN'}</span></div>
+                <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"></path></svg><strong>Model Name:</strong></div><span class="res-value">${obj.model || 'UNKNOWN'}</span></div>
+                <div class="telecom-meta-block">
+                    <div class="meta-row"><span class="meta-label">Manufacturer:</span><span class="meta-val">${obj.manufacturer || 'N/A'}</span></div>
+                    <div class="meta-row"><span class="meta-label">Device Type:</span><span class="meta-val">${obj.type || 'N/A'}</span></div>
+                    <div class="meta-row"><span class="meta-label">Specs / Frequency:</span><span class="meta-val">${obj.specifications || 'GSM / LTE / 5G'}</span></div>
+                </div>
+            `;
+            imeiWrapper.appendChild(card);
+        } else { imeiWrapper.innerHTML = `<div class="inner-error">> No hardware profiles match this TAC footprint.</div>`; }
+    } catch (error) {
+        loadingText.style.display = 'none';
+        errorBox.innerText = `TAC CORE BLOCK INTERCEPT ERROR. Check Token configurations.`;
+        errorBox.style.display = 'block';
+    }
+}
+
+function downloadTextReport() {
+    let nameVal = document.getElementById('nameInput').value.trim();
+    let singleVal = document.getElementById('targetInput').value.trim();
+    let logTitle = activePhoneSearchSubMode === 'name' ? nameVal : singleVal;
+    
+    let textOutput = `=== STF SOG14 OSINT SYSTEM DISPATCH MANIFEST ===\n`;
+    textOutput += `GENERATION TIMESTAMP: ${new Date().toISOString()}\n\n`;
+
+    const cards = document.querySelectorAll('.record-card');
+    cards.forEach(card => {
+        const title = card.querySelector('.record-title')?.innerText || '[DATA_BLOCK]';
+        textOutput += `${title}\n----------------------------------------\n`;
+        card.querySelectorAll('.result-item, .meta-row').forEach(row => {
+            let label = row.querySelector('strong')?.innerText || row.querySelector('.meta-label')?.innerText || 'Label';
+            let val = row.querySelector('.res-value')?.innerText || row.querySelector('.meta-val')?.innerText || 'N/A';
+            textOutput += `${label.replace(':','').padEnd(20)}: ${val.trim()}\n`;
+        });
+        textOutput += `\n`;
+    });
+
+    const blob = new Blob([textOutput], { type: 'text/plain' });
+    const anchor = document.createElement('a');
+    anchor.download = `SOG14_INTEL_DISPATCH_${logTitle.replace(/\s+/g, '_')}.txt`;
+    anchor.href = URL.createObjectURL(blob);
+    anchor.click();
+}
+
+function downloadPdfReport() {
+    window.print();
+}
+</script>
+</body>
+</html>
