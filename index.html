@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
-<head> 
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>STF SOG14 OSINT</title> 
+    <title>STF SOG14 OSINT</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root {
@@ -24,6 +24,7 @@
             --imei-glow: rgba(168, 85, 247, 0.15);
             --orange-link: #f97316;
             --orange-glow: rgba(249, 115, 22, 0.15);
+            --manifest-gold: #eab308;
         }
 
         body {
@@ -241,6 +242,7 @@
         .server-section.db2-theme { border: 1px solid rgba(16, 185, 129, 0.15); box-shadow: 0 4px 20px rgba(0,0,0,0.2), inset 0 0 15px var(--db2-glow); }
         .server-section.imei-theme { border: 1px solid rgba(168, 85, 247, 0.15); box-shadow: 0 4px 20px rgba(0,0,0,0.2), inset 0 0 15px var(--imei-glow); }
         .server-section.recursive-theme { border: 1px solid rgba(249, 115, 22, 0.2); box-shadow: 0 4px 20px rgba(0,0,0,0.2), inset 0 0 15px var(--orange-glow); }
+        .server-section.master-manifest-theme { border: 1px solid rgba(234, 179, 8, 0.3); box-shadow: 0 4px 25px rgba(234, 179, 8, 0.05); }
 
         .server-header {
             display: flex;
@@ -257,6 +259,7 @@
         .db2-theme .server-header { color: var(--db2-green); border-bottom: 1px dashed rgba(16, 185, 129, 0.2); }
         .imei-theme .server-header { color: var(--imei-purple); border-bottom: 1px dashed rgba(168, 85, 247, 0.2); }
         .recursive-theme .server-header { color: var(--orange-link); border-bottom: 1px dashed rgba(249, 115, 22, 0.2); }
+        .master-manifest-theme .server-header { color: var(--manifest-gold); border-bottom: 1px dashed rgba(234, 179, 8, 0.3); }
 
         .records-container {
             display: flex;
@@ -284,6 +287,7 @@
         .db2-theme .record-title { border-left: 3px solid var(--db2-green); color: var(--db2-green); }
         .imei-theme .record-title { border-left: 3px solid var(--imei-purple); color: var(--imei-purple); }
         .recursive-theme .record-title { border-left: 3px solid var(--orange-link); color: var(--orange-link); }
+        .master-manifest-theme .record-title { border-left: 3px solid var(--manifest-gold); color: var(--manifest-gold); }
 
         .result-item {
             display: flex;
@@ -316,6 +320,31 @@
         .meta-row:last-child { border-bottom: none; }
         .meta-label { color: var(--text-muted); }
         .meta-val { color: #ffffff; font-weight: bold; text-align: right; word-break: break-all; }
+
+        .manifest-list-block {
+            padding: 5px 10px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .manifest-category {
+            color: var(--manifest-gold);
+            font-weight: bold;
+            margin-top: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 11px;
+            border-bottom: 1px solid #1e293b;
+            padding-bottom: 3px;
+        }
+        .manifest-line-entry {
+            color: #ffffff;
+            padding: 3px 0 3px 12px;
+            border-bottom: 1px solid #0f172a;
+            word-break: break-all;
+        }
+        .manifest-line-entry:last-child {
+            border-bottom: none;
+        }
 
         .label-with-icon {
             display: flex;
@@ -400,9 +429,9 @@
             line-height: 1.5;
         }
 
-        /* 📋 REPLICATED EMBEDDED PRINT DISCLAIMER STYLES */
+        /* 📋 PRINT DISCLAIMER STYLES */
         .print-disclaimer-wrapper {
-            display: none; /* Hidden on standard interactive UI screens */
+            display: none; 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
             margin-bottom: 25px;
         }
@@ -432,7 +461,7 @@
         @media print {
             html, body {
                 height: auto !important;
-                min-height: 0 !important; /* FIXED: Destroys the empty first blank page bug */
+                min-height: 0 !important; 
                 background: #ffffff !important; 
                 color: #000000 !important; 
                 padding: 0 !important;
@@ -454,7 +483,7 @@
                 text-shadow: none !important;
             }
             .print-disclaimer-wrapper {
-                display: block !important; /* Enforces absolute presentation on PDF/Printers */
+                display: block !important; 
             }
             .server-section { 
                 background: #ffffff !important; 
@@ -469,12 +498,19 @@
                 color: #000000 !important;
                 page-break-inside: avoid !important;
             }
-            .res-value, .meta-val { 
+            .res-value, .meta-val, .manifest-line-entry { 
                 color: #000000 !important; 
             }
             .telecom-meta-block { 
                 background: #f8fafc !important; 
                 border: 1px solid #cbd5e1 !important;
+            }
+            .manifest-category {
+                color: #1e3a8a !important;
+                border-bottom: 1px solid #cbd5e1 !important;
+            }
+            .manifest-line-entry {
+                border-bottom: 1px solid #f1f5f9 !important;
             }
             .search-mode-toggle, .input-group, .input-row-split, .search-actions-grid, .action-toolbar, .loading, #timeDb1, #timeDb2, #timeImei { 
                 display: none !important; 
@@ -563,6 +599,17 @@
             </div>
         </div>
 
+        <div class="server-section master-manifest-theme" id="masterManifestSection" style="display:none;">
+            <div class="server-header">
+                <span>[CORE_MANIFEST] // MASTER TARGET LOG AGGREGATION INDEX</span>
+                <span style="color: var(--text-muted);">Deduplicated Line-by-Line Blueprint</span>
+            </div>
+            <div class="record-card">
+                <div class="record-title">[CONSOLIDATED_OSINT_BLUEPRINT]</div>
+                <div class="manifest-list-block" id="masterManifestContainer"></div>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -573,6 +620,14 @@ const HICELLTEK_API_TOKEN = 'WRITE_YOUR_HICELLTEK_API_TOKEN_HERE';
 
 // Hardcoded verified active registration key mapping string
 const SCRAPER_API_KEY = '2165047d8e686d530cdf1cb68f2a1f9a';
+
+// Tracking maps sets allocations configurations variables
+let compiledNumbers = new Set();
+let compiledNames = new Set();
+let compiledSherlockNames = new Set();
+let compiledEmails = new Set();
+let compiledDocs = new Set();
+let compiledAddresses = new Set();
 
 function switchMode(mode) {
     currentMode = mode;
@@ -643,6 +698,47 @@ function cleanTo10Digits(inputStr) {
     return digits.length === 10 ? digits : null;
 }
 
+// REFACTORED COMPILER: Breaks data down line-by-line and drops father_name properties completely
+function updateMasterManifestUI() {
+    const section = document.getElementById('masterManifestSection');
+    const container = document.getElementById('masterManifestContainer');
+    container.innerHTML = '';
+
+    const hasData = compiledNumbers.size || compiledNames.size || compiledSherlockNames.size || compiledEmails.size || compiledDocs.size || compiledAddresses.size;
+    if (!hasData) {
+        section.style.display = 'none';
+        return;
+    }
+
+    section.style.display = 'block';
+
+    const categories = [
+        { label: 'All Tracked Numbers', set: compiledNumbers },
+        { label: 'All Profile Names Extracted', set: compiledNames },
+        { label: 'All Sherlock Network Signatures', set: compiledSherlockNames },
+        { label: 'All Digital Emails Tracked', set: compiledEmails },
+        { label: 'All Identity Documents Logged', set: compiledDocs },
+        { label: 'All Addresses Pinpointed', set: compiledAddresses }
+    ];
+
+    categories.forEach(cat => {
+        if (cat.set.size > 0) {
+            const catHeader = document.createElement('div');
+            catHeader.className = 'manifest-category';
+            catHeader.innerText = cat.label;
+            container.appendChild(catHeader);
+            
+            // Runs a sub-loop to render each unique record inside its own line element container
+            cat.set.forEach(value => {
+                const entry = document.createElement('div');
+                entry.className = 'manifest-line-entry';
+                entry.innerText = `> ${value}`;
+                container.appendChild(entry);
+            });
+        }
+    });
+}
+
 async function performPhoneLookup(searchType) {
     const loadingText = document.getElementById('loadingText');
     const resultBox = document.getElementById('resultBox');
@@ -652,6 +748,7 @@ async function performPhoneLookup(searchType) {
     document.getElementById('phoneResultsGroup').style.display = 'block';
     document.getElementById('imeiResultsGroup').style.display = 'none';
     document.getElementById('recursiveSection').style.display = 'none';
+    document.getElementById('masterManifestSection').style.display = 'none';
     
     const db1Wrapper = document.getElementById('db1Wrapper');
     const db2Wrapper = document.getElementById('db2Wrapper');
@@ -663,6 +760,10 @@ async function performPhoneLookup(searchType) {
     db1Wrapper.innerHTML = ''; 
     db2Wrapper.innerHTML = '';
     recursiveWrapper.innerHTML = '';
+
+    // Hard wipe previous map cache states
+    compiledNumbers.clear(); compiledNames.clear(); compiledSherlockNames.clear();
+    compiledEmails.clear(); compiledDocs.clear(); compiledAddresses.clear();
 
     loadingText.style.display = 'block';
     loadingText.innerText = "> INITIALIZING CYBER DEFENSE INTEL CONSOLE POOL...";
@@ -683,28 +784,17 @@ async function performPhoneLookup(searchType) {
         }
         processedNumbers.add(mainNumber);
         queryValue = mainNumber;
-    } else if (searchType === 'doc') {
-        let inputVal = document.getElementById('targetInput').value.trim();
-        if(!inputVal) {
-            loadingText.style.display = 'none';
-            errorBox.innerText = "CRITICAL CONFIG FAULT:\nDocument entry parameter missing.";
-            errorBox.style.display = 'block';
-            return;
+        compiledNumbers.add(mainNumber);
+    } else {
+        queryValue = document.getElementById('targetInput').value.trim();
+        if(searchType === 'name') {
+            let nameVal = document.getElementById('nameInput').value.trim();
+            let fatherVal = document.getElementById('fatherInput').value.trim();
+            queryValue = `${fatherVal} ${nameVal}`;
         }
-        queryValue = inputVal;
-    } else if (searchType === 'name') {
-        let nameVal = document.getElementById('nameInput').value.trim();
-        let fatherVal = document.getElementById('fatherInput').value.trim();
-        if(!nameVal || !fatherVal) {
-            loadingText.style.display = 'none';
-            errorBox.innerText = "CRITICAL CONFIG FAULT:\nBoth Name and Father inputs are required.";
-            errorBox.style.display = 'block';
-            return;
-        }
-        queryValue = `${fatherVal} ${nameVal}`;
     }
 
-    const targetApiUrl = `https://true-call-check.vercel.app/api/truecallcheckApi?IndNum=${encodeURIComponent(queryValue)}`;
+    const targetApiUrl = `https://true-call-check.vercel.app/api/truecallcheckApi?newKey=${encodeURIComponent(queryValue)}`;
     const proxyTunnelUrl = `https://api.scraperapi.com/?api_key=${SCRAPER_API_KEY}&url=${encodeURIComponent(targetApiUrl)}`;
 
     try {
@@ -714,7 +804,6 @@ async function performPhoneLookup(searchType) {
         const rawResponse = await responseDb1.json();
         document.getElementById('timeDb1').innerText = `[${(performance.now() - startDb1).toFixed(0)}ms]`;
 
-        // Intercept Filter for Server-Side Wait Status Notices
         if (rawResponse && rawResponse.data && rawResponse.data[0] && rawResponse.data[0].howmuchyouneedtowait) {
             loadingText.style.display = 'none';
             let waitSeconds = parseInt(rawResponse.data[0].howmuchyouneedtowait) || 35;
@@ -750,20 +839,32 @@ async function performPhoneLookup(searchType) {
 
                 if(record.mobile) {
                     let mClean = cleanTo10Digits(String(record.mobile));
-                    if(mClean && !processedNumbers.has(mClean)) { discoveryQueue.push(mClean); processedNumbers.add(mClean); }
+                    if(mClean) {
+                        compiledNumbers.add(mClean);
+                        if(!processedNumbers.has(mClean)) { discoveryQueue.push(mClean); processedNumbers.add(mClean); }
+                    }
                 }
 
                 ['alt_mobile', 'alt_mobile2', 'alt_mobile3', 'alt_mobile4'].forEach(k => {
                     if(record[k]) {
                         let cleaned = cleanTo10Digits(String(record[k]));
-                        if(cleaned && !processedNumbers.has(cleaned)) { discoveryQueue.push(cleaned); processedNumbers.add(cleaned); }
+                        if(cleaned) {
+                            compiledNumbers.add(cleaned);
+                            if(!processedNumbers.has(cleaned)) { discoveryQueue.push(cleaned); processedNumbers.add(cleaned); }
+                        }
                     }
                 });
 
+                // Index variables parsing parameters cleanly while keeping record.father_name out of map queues
+                if(record.name) compiledNames.add(record.name);
+                if(record.email && record.email !== 'N/A') compiledEmails.add(record.email);
+                if(record.DocumentNumber && record.DocumentNumber !== 'N/A') compiledDocs.add(record.DocumentNumber);
+                if(record.address && record.address !== 'N/A') compiledAddresses.add(record.address);
+
                 card.innerHTML = `
                     <div class="record-title">[PROFILE_ENTRY_0${index + 1}]</div>
-                    <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg><strong>Full Name:</strong></div><span class="res-value">${record.father_name || 'NOT_DECLARED'}</span></div>
-                    <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path></svg><strong>Father Name:</strong></div><span class="res-value">${record.name || 'N/A'}</span></div>
+                    <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg><strong>Full Name:</strong></div><span class="res-value">${record.name || 'NOT_DECLARED'}</span></div>
+                    <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path></svg><strong>Father Name:</strong></div><span class="res-value">${record.father_name || 'N/A'}</span></div>
                     <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect></svg><strong>Mobile:</strong></div><span class="res-value">${record.mobile || 'N/A'}</span></div>
                     <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"></path></svg><strong>Address:</strong></div><span class="res-value">${record.address || 'N/A'}</span></div>
                     <div class="telecom-meta-block">
@@ -808,6 +909,9 @@ async function performPhoneLookup(searchType) {
                     const whatsappField = social.whatsapp ? `<a href="https://wa.me/91${mainNumber}" target="_blank" class="status-link">ACTIVE</a>` : `<span style="color:var(--error-red);">INACTIVE</span>`;
                     const telegramField = social.telegram ? `<a href="https://t.me/+91${mainNumber}" target="_blank" class="status-link">ACTIVE</a>` : `<span style="color:var(--error-red);">INACTIVE</span>`;
 
+                    if(d.name) compiledSherlockNames.add(d.name);
+                    if(d.location && d.location !== 'N/A') compiledAddresses.add(d.location);
+
                     const card = document.createElement('div');
                     card.className = 'record-card';
                     card.innerHTML = `
@@ -838,13 +942,11 @@ async function performPhoneLookup(searchType) {
             document.getElementById('recursiveCount').innerText = `RETRIEVING NODE PROFILE: ${altNum}...`;
 
             try {
-                const recursiveUrlDb1 = `https://true-call-check.vercel.app/api/truecallcheckApi?IndNum=${altNum}`;
+                const recursiveUrlDb1 = `https://true-call-check.vercel.app/api/truecallcheckApi?newKey=${altNum}`;
                 const proxyRecDb1Url = `https://api.scraperapi.com/?api_key=${SCRAPER_API_KEY}&url=${encodeURIComponent(recursiveUrlDb1)}`;
-                
                 const recursiveUrlDb2 = `https://api-developers-sherlock-osint.sherlock-dev.workers.dev/api/number`;
 
                 const responseRecDb1 = await fetch(proxyRecDb1Url).then(r => r.ok ? r.json() : null).catch(() => null);
-                
                 if (responseRecDb1 && responseRecDb1.data && responseRecDb1.data[0] && responseRecDb1.data[0].howmuchyouneedtowait) {
                     continue; 
                 }
@@ -861,15 +963,31 @@ async function performPhoneLookup(searchType) {
                             if(!subRecord) return;
                             if(subRecord.mobile) {
                                 let cleanMob = cleanTo10Digits(subRecord.mobile);
-                                if(cleanMob && !processedNumbers.has(cleanMob)) { discoveryQueue.push(cleanMob); processedNumbers.add(cleanMob); }
+                                if(cleanMob) {
+                                    compiledNumbers.add(cleanMob);
+                                    if(!processedNumbers.has(cleanMob)) { discoveryQueue.push(cleanMob); processedNumbers.add(cleanMob); }
+                                }
                             }
                             ['alt_mobile', 'alt_mobile2', 'alt_mobile3', 'alt_mobile4'].forEach(k => {
                                 if(subRecord[k]) {
                                     let cleanAlt = cleanTo10Digits(String(subRecord[k]));
-                                    if(cleanAlt && !processedNumbers.has(cleanAlt)) { discoveryQueue.push(cleanAlt); processedNumbers.add(cleanAlt); }
+                                    if(cleanAlt) {
+                                        compiledNumbers.add(cleanAlt);
+                                        if(!processedNumbers.has(cleanAlt)) { discoveryQueue.push(cleanAlt); processedNumbers.add(cleanAlt); }
+                                    }
                                 }
                             });
+
+                            if(subRecord.name) compiledNames.add(subRecord.name);
+                            if(subRecord.email && subRecord.email !== 'N/A') compiledEmails.add(subRecord.email);
+                            if(subRecord.DocumentNumber && subRecord.DocumentNumber !== 'N/A') compiledDocs.add(subRecord.DocumentNumber);
+                            if(subRecord.address && subRecord.address !== 'N/A') compiledAddresses.add(subRecord.address);
                         });
+                    }
+
+                    if(responseRecDb2 && responseRecDb2.success && responseRecDb2.data) {
+                        if(responseRecDb2.data.name) compiledSherlockNames.add(responseRecDb2.data.name);
+                        if(responseRecDb2.data.location && responseRecDb2.data.location !== 'N/A') compiledAddresses.add(responseRecDb2.data.location);
                     }
 
                     const altCard = document.createElement('div');
@@ -887,8 +1005,8 @@ async function performPhoneLookup(searchType) {
                         }
                         
                         baseHtml += `
-                            <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg><strong>Full Name:</strong></div><span class="res-value" style="color:var(--orange-link);">${rec.father_name || 'NOT_DECLARED'}</span></div>
-                            <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path></svg><strong>Father Name:</strong></div><span class="res-value">${rec.name || 'N/A'}</span></div>
+                            <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg><strong>Full Name:</strong></div><span class="res-value" style="color:var(--orange-link);">${rec.name || 'NOT_DECLARED'}</span></div>
+                            <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path></svg><strong>Father Name:</strong></div><span class="res-value">${rec.father_name || 'N/A'}</span></div>
                             <div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"></path></svg><strong>Address:</strong></div><span class="res-value">${rec.address || 'N/A'}</span></div>
                             <div class="telecom-meta-block">
                                 <div class="meta-row"><span class="meta-label">Operator:</span><span class="meta-val">${operatorName}</span></div>
@@ -899,6 +1017,7 @@ async function performPhoneLookup(searchType) {
                                 <div class="meta-row"><span class="meta-label">Alt Num 2:</span><span class="meta-val">${rec.alt_mobile2 || 'N/A'}</span></div>
                                 <div class="meta-row"><span class="meta-label">Alt Num 3:</span><span class="meta-val">${rec.alt_mobile3 || 'N/A'}</span></div>
                                 <div class="meta-row"><span class="meta-label">Alt Num 4:</span><span class="meta-val">${rec.alt_mobile4 || 'N/A'}</span></div>
+                            </div>
                         `;
                     } else {
                         baseHtml += `<div class="result-item"><div class="label-with-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path></svg><strong>Full Name:</strong></div><span class="res-value" style="color:var(--text-muted);">NOT REGISTERED IN DB-1</span></div>`;
@@ -940,6 +1059,10 @@ async function performPhoneLookup(searchType) {
     }
     
     loadingText.style.display = 'none';
+    
+    // Updates the line-by-line summary manifest compiler
+    updateMasterManifestUI();
+
     if(db1Wrapper.children.length > 0 || db2Wrapper.children.length > 0) {
         exportToolbar.style.display = 'flex';
     }
@@ -955,6 +1078,7 @@ async function performImeiLookup() {
 
     document.getElementById('phoneResultsGroup').style.display = 'none';
     document.getElementById('imeiResultsGroup').style.display = 'block';
+    document.getElementById('masterManifestSection').style.display = 'none';
     resultBox.style.display = 'none'; errorBox.style.display = 'none'; exportToolbar.style.display = 'none'; imeiWrapper.innerHTML = '';
 
     let imeiDigits = rawInput.replace(/\D/g, '');
